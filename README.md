@@ -2,6 +2,12 @@
 
 Generate rave visuals from a DJ mix in one click.
 
+> **V2 is here:** open `v2/index.html` for the full editor build — Home →
+> Analysis → multi-track Editor → deterministic MP4 export. Implements
+> [`docs/POOPDOG-V2-SPEC.md`](docs/POOPDOG-V2-SPEC.md); see
+> [`v2/README.md`](v2/README.md). The files below are the V1 prototype,
+> kept as the spec's reference implementation.
+
 Poopdog understands the music first, then drives the visuals automatically:
 drop in an MP3/WAV, the engine detects **BPM, beats, kicks, snares, drops,
 build-ups and energy levels**, then **Auto Show Mode** generates a full

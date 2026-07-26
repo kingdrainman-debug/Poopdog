@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poopdog V2</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<section id="scr-home" class="screen">
+  <div class="home-wrap">
+    <div class="home-head">
+      <div class="logo">POOPDOG <span>V2</span></div>
+      <div class="dim">Music-aware visual show generator</div>
+    </div>
+    <div id="home-drop" class="home-drop">
+      <div class="big">🎵 New from audio</div>
+      <div class="dim">Drop an MP3 / WAV here, or click to browse.<br>
+        The mix is analysed, then a full show is generated — every clip editable.</div>
+      <input type="file" id="home-file" accept="audio/*" hidden>
+    </div>
+    <div class="home-row">
+      <h3>Templates</h3>
+      <div id="home-templates" class="cards"></div>
+    </div>
+    <div class="home-row">
+      <h3>Recent projects</h3>
+      <div id="home-recent" class="cards"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ANALYSIS ============ -->
+<section id="scr-analysis" class="screen" hidden>
+  <div class="an-wrap">
+    <div class="an-head">
+      <div><div class="logo small">ANALYSIS</div><div id="an-file" class="dim"></div></div>
+      <div class="an-stats">
+        <span class="stat"><b id="an-bpm">—</b> BPM</span>
+        <button class="mini" id="an-half">×½</button>
+        <button class="mini" id="an-double">×2</button>
+        <span class="stat" id="an-dur">—</span>
+        <span class="stat" id="an-secs">—</span>
+      </div>
+    </div>
+    <div id="an-status" class="dim">Decoding…</div>
+    <canvas id="an-canvas"></canvas>
+    <div class="an-hint dim">Drag section boundaries to move them · click a section to change its type · everything stays editable later</div>
+    <div class="an-actions">
+      <button id="an-empty" class="btn">Start empty</button>
+      <button id="an-generate" class="btn accent">⚡ Generate show</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EDITOR ============ -->
+<section id="scr-editor" class="screen" hidden>
+  <header id="ed-top">
+    <div class="logo small" id="ed-home">🌀 POOPDOG</div>
+    <div class="transport">
+      <button class="mini" id="tr-start">⏮</button>
+      <button class="mini wide" id="tr-play">▶</button>
+      <span id="tr-time" class="mono">0:00.00</span>
+      <span class="dim mono" id="tr-bpm"></span>
+    </div>
+    <div class="top-right">
+      <label class="chk"><input type="checkbox" id="ed-snap" checked>Snap</label>
+      <span class="dim">seed</span><input type="number" id="ed-seed" value="1" min="0" max="9999">
+      <button class="btn" id="ed-regen">⚡ Generate</button>
+      <button class="btn accent" id="ed-export">Export</button>
+    </div>
+  </header>
+
+  <div id="ed-main">
+    <aside id="ed-assets">
+      <input type="search" id="as-search" placeholder="Search generators…">
+      <div id="as-list"></div>
+    </aside>
+
+    <div id="ed-centre">
+      <div id="ed-preview-wrap">
+        <canvas id="ed-preview" width="1280" height="720"></canvas>
+        <div id="pv-hud">
+          <span id="pv-beat" class="beatdot"></span>
+          <span id="pv-section">—</span>
+          <span id="pv-fps" class="mono">60</span>
+          <button class="mini" id="pv-quality">Full</button>
+          <button class="mini" id="pv-full">⛶</button>
+        </div>
+      </div>
+    </div>
+
+    <aside id="ed-inspector">
+      <div id="in-empty" class="dim center">Select a clip to edit it</div>
+      <div id="in-body" hidden></div>
+    </aside>
+  </div>
+
+  <div id="ed-nav"><canvas id="nav-canvas"></canvas></div>
+  <div id="ed-timeline"><canvas id="tl-canvas"></canvas></div>
+</section>
+
+<!-- ============ EXPORT ============ -->
+<div id="scr-export" class="overlay" hidden>
+  <div class="ex-panel">
+    <h2>Export</h2>
+    <div id="ex-summary" class="dim"></div>
+    <div class="ex-presets" id="ex-presets"></div>
+    <div class="ex-grid">
+      <label>Resolution
+        <select id="ex-res">
+          <option value="1920x1080" selected>1920 × 1080</option>
+          <option value="2560x1440">2560 × 1440</option>
+          <option value="3840x2160">3840 × 2160 (4K)</option>
+          <option value="1080x1920">1080 × 1920 (vertical)</option>
+          <option value="1080x1080">1080 × 1080 (square)</option>
+        </select></label>
+      <label>Frame rate
+        <select id="ex-fps"><option>30</option><option selected>60</option></select></label>
+      <label>Quality <span id="ex-qv" class="dim">75</span>
+        <input type="range" id="ex-q" min="1" max="100" value="75"></label>
+      <label>Format
+        <select id="ex-format">
+          <option value="mp4" selected>MP4 (H.264)</option>
+          <option value="webm">WebM (fallback)</option>
+        </select></label>
+      <label>Range
+        <select id="ex-range"><option value="all" selected>Whole track</option><option value="30">First 30 s</option><option value="10">First 10 s</option></select></label>
+    </div>
+    <div id="ex-progress" hidden>
+      <div class="bar"><div id="ex-bar-fill"></div></div>
+      <div class="dim mono" id="ex-stats">—</div>
+    </div>
+    <div id="ex-note" class="dim"></div>
+    <div class="ex-actions">
+      <button class="btn" id="ex-close">Close</button>
+      <button class="btn accent" id="ex-start">Render MP4</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script type="module" src="js/ui/app.js"></script>
+</body>
+</html>
