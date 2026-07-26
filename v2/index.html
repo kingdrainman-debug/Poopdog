@@ -145,5 +145,27 @@
 <div id="toast" hidden></div>
 
 <script type="module" src="js/ui/app.js"></script>
+<script>
+// file:// guard: browsers block ES module imports when this page is opened
+// directly from disk, so the app cannot boot. Say so instead of dying silently.
+window.addEventListener("load", function () {
+  setTimeout(function () {
+    if (window.__poopdogBooted) return;
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;inset:0;z-index:999;background:#0a0a0f;color:#e8e8f0;" +
+      "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+      "gap:14px;text-align:center;padding:24px;font-family:system-ui,sans-serif";
+    d.innerHTML = "<div style='font-size:40px'>🌀</div>" +
+      "<b style='font-size:18px'>This page can't run when opened directly from disk</b>" +
+      "<div style='color:#8888a0;max-width:520px;line-height:1.6;font-size:13px'>" +
+      "Browsers block the app's module files on <code>file://</code>.<br><br>" +
+      "<b>Easiest fix:</b> use the single-file build — open <code>v2/dist/poopdog-v2.html</code> " +
+      "(or <code>poopdog-v2-mobile.html</code>) instead; those work from anywhere.<br><br>" +
+      "Or serve the folder: <code>python3 -m http.server 8000</code> then visit " +
+      "<code>http://localhost:8000/v2/</code></div>";
+    document.body.appendChild(d);
+  }, 400);
+});
+</script>
 </body>
 </html>

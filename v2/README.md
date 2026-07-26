@@ -6,11 +6,25 @@ codebase an Electron/Tauri desktop shell would host.
 
 ## Run
 
+**Just double-clicking a file?** Use the single-file builds — they work
+straight from disk, no server needed:
+
+- `dist/poopdog-v2.html` — desktop editor
+- `dist/poopdog-v2-mobile.html` — mobile shell
+
+**Working on the source?** The source pages use ES modules, which browsers
+block on `file://` — serve them over http (opening the source pages from
+disk shows an explanatory banner instead of failing silently):
+
 ```sh
-python3 -m http.server 8000     # any static server; ES modules need http://
+python3 -m http.server 8000     # any static server
 # open http://localhost:8000/v2/          (desktop editor)
 # open http://localhost:8000/v2/mobile.html  (mobile shell)
 ```
+
+After changing source, regenerate the dist builds with `node v2/build.js`
+(dependency-free bundler; relies on the repo's restricted module style —
+single-line imports, declaration-prefix exports only).
 
 **Mobile:** `mobile.html` is a touch-first shell over the *same* core
 modules — it imports `analysis.js`, `engine.js`, `director.js`,

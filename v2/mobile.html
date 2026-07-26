@@ -350,6 +350,25 @@ frame();
 
 // expose for tests
 window.__poopdog = { get project() { return project; }, get analysis() { return analysis; }, playback, engine };
+window.__poopdogBooted = true;
+</script>
+<script>
+// file:// guard: modules are blocked when opened directly from disk.
+window.addEventListener("load", function () {
+  setTimeout(function () {
+    if (window.__poopdogBooted) return;
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;inset:0;z-index:999;background:#0a0a0f;color:#e8e8f0;" +
+      "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+      "gap:12px;text-align:center;padding:24px;font-family:system-ui,sans-serif";
+    d.innerHTML = "<div style='font-size:40px'>🌀</div>" +
+      "<b>This page can't run when opened directly from disk</b>" +
+      "<div style='color:#8888a0;line-height:1.6;font-size:13px'>" +
+      "Use the single-file build instead:<br><code>v2/dist/poopdog-v2-mobile.html</code><br><br>" +
+      "or serve the folder over http.</div>";
+    document.body.appendChild(d);
+  }, 400);
+});
 </script>
 </body>
 </html>

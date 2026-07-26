@@ -1,0 +1,3618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Poopdog V2</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0a0f; --panel: #12121a; --panel2: #1a1a26; --line: #23233444;
+  --text: #e8e8f0; --dim: #8888a0; --accent: #c8ff00; --accent2: #ff2d95;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text); overflow: hidden;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif; font-size: 13px;
+}
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.screen[hidden] { display: none; }
+.dim { color: var(--dim); }
+.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; }
+.center { text-align: center; }
+.logo { font-weight: 800; letter-spacing: 3px; font-size: 20px; color: var(--accent); }
+.logo span { color: var(--text); }
+.logo.small { font-size: 13px; cursor: pointer; }
+
+.btn {
+  background: var(--panel2); color: var(--text); border: 1px solid #2a2a3c;
+  border-radius: 6px; padding: 8px 16px; font-size: 13px; cursor: pointer;
+}
+.btn:hover { background: #232336; }
+.btn.accent { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+.btn.accent:hover { background: #d8ff40; }
+.mini {
+  background: #22222f; color: var(--text); border: 0; border-radius: 5px;
+  padding: 4px 9px; font-size: 12px; cursor: pointer;
+}
+.mini:hover { background: #2e2e42; }
+.mini.wide { padding: 4px 18px; }
+input[type=search], input[type=number], input[type=text], select {
+  background: var(--panel2); color: var(--text); border: 1px solid #2a2a3c;
+  border-radius: 5px; padding: 6px 8px; font-size: 12px;
+}
+input[type=range] { accent-color: var(--accent); }
+.chk { display: flex; gap: 5px; align-items: center; color: var(--dim); font-size: 12px; }
+
+/* ---------- home ---------- */
+.home-wrap { max-width: 860px; margin: 0 auto; padding: 48px 24px; overflow-y: auto; width: 100%; }
+.home-head { margin-bottom: 28px; }
+.home-drop {
+  border: 2px dashed #2e2e44; border-radius: 14px; padding: 44px 24px;
+  text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+}
+.home-drop:hover, .home-drop.over { border-color: var(--accent); background: #12121c; }
+.home-drop .big { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+.home-row { margin-top: 30px; }
+.home-row h3 { font-size: 12px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
+.cards { display: flex; gap: 10px; flex-wrap: wrap; }
+.card {
+  background: var(--panel); border: 1px solid #23233a; border-radius: 10px;
+  padding: 14px 16px; min-width: 165px; cursor: pointer;
+}
+.card:hover { border-color: var(--accent); }
+.card .t { font-weight: 700; margin-bottom: 4px; }
+.card .d { color: var(--dim); font-size: 11px; }
+.card .swatches { display: flex; gap: 3px; margin-top: 8px; }
+.card .swatches i { width: 18px; height: 8px; border-radius: 2px; }
+
+/* ---------- analysis ---------- */
+.an-wrap { max-width: 1100px; width: 100%; margin: 0 auto; padding: 36px 24px; display: flex; flex-direction: column; gap: 14px; height: 100%; }
+.an-head { display: flex; justify-content: space-between; align-items: flex-end; }
+.an-stats { display: flex; gap: 10px; align-items: center; }
+.stat { background: var(--panel); padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+.stat b { color: var(--accent); }
+#an-canvas { width: 100%; height: 300px; background: #0d0d14; border-radius: 10px; flex: 1; min-height: 200px; cursor: crosshair; }
+.an-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.an-hint { font-size: 11px; }
+
+/* ---------- editor ---------- */
+#ed-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 8px 14px; background: var(--panel); border-bottom: 1px solid #222232;
+}
+.transport { display: flex; align-items: center; gap: 8px; }
+.top-right { display: flex; align-items: center; gap: 8px; }
+.top-right input[type=number] { width: 62px; }
+
+#ed-main { flex: 1; display: flex; min-height: 0; }
+#ed-assets {
+  width: 205px; background: var(--panel); border-right: 1px solid #1e1e2e;
+  display: flex; flex-direction: column;
+}
+#as-search { margin: 8px; }
+#as-list { overflow-y: auto; flex: 1; padding-bottom: 12px; }
+.as-cat { padding: 9px 12px 4px; font-size: 10px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; }
+.as-item {
+  padding: 6px 12px; cursor: grab; display: flex; align-items: center; gap: 8px; font-size: 12px;
+  border-left: 2px solid transparent;
+}
+.as-item:hover { background: #1c1c2a; border-left-color: var(--accent); }
+.as-item .sw { width: 14px; height: 14px; border-radius: 4px; flex: none; }
+
+#ed-centre { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #000; }
+#ed-preview-wrap { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+#ed-preview { max-width: 100%; max-height: 100%; }
+#pv-hud {
+  position: absolute; top: 8px; left: 10px; display: flex; gap: 10px; align-items: center;
+  background: rgba(0,0,0,.5); padding: 4px 10px; border-radius: 6px; font-size: 11px;
+}
+.beatdot { width: 9px; height: 9px; border-radius: 50%; background: #333; display: inline-block; }
+.beatdot.on { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+#ed-inspector {
+  width: 268px; background: var(--panel); border-left: 1px solid #1e1e2e;
+  overflow-y: auto; padding: 12px;
+}
+#in-body h4 { font-size: 11px; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; margin: 14px 0 6px; }
+.in-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.in-head .name { font-weight: 700; flex: 1; }
+.in-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+.in-row label { flex: 0 0 86px; color: var(--dim); font-size: 11px; }
+.in-row input[type=range] { flex: 1; min-width: 0; }
+.in-row .val { flex: 0 0 40px; text-align: right; font-size: 11px; }
+.in-row select { flex: 1; }
+.modslot { background: var(--panel2); border-radius: 7px; padding: 7px 9px; margin: 6px 0; }
+.modslot .in-row label { flex-basis: 58px; }
+.modslot .rm { float: right; }
+.seg { display: flex; border-radius: 6px; overflow: hidden; margin: 6px 0; }
+.seg button { flex: 1; border: 0; padding: 5px 0; background: #22222f; color: var(--dim); cursor: pointer; font-size: 11px; }
+.seg button.on { background: var(--accent); color: #000; font-weight: 700; }
+
+#ed-nav { height: 44px; background: var(--panel); border-top: 1px solid #222232; }
+#nav-canvas { width: 100%; height: 100%; display: block; cursor: pointer; }
+#ed-timeline { height: 252px; background: #0d0d14; border-top: 1px solid #222232; }
+#tl-canvas { width: 100%; height: 100%; display: block; }
+
+/* ---------- export ---------- */
+.overlay {
+  position: fixed; inset: 0; background: rgba(4,4,8,.7); z-index: 30;
+  display: flex; align-items: center; justify-content: center;
+}
+.overlay[hidden] { display: none; }
+.ex-panel {
+  background: var(--panel); border: 1px solid #2a2a40; border-radius: 14px;
+  padding: 22px; width: 520px; max-width: 94vw; display: flex; flex-direction: column; gap: 14px;
+}
+.ex-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+.ex-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.ex-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: var(--dim); }
+.ex-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.bar { height: 8px; background: #22222f; border-radius: 4px; overflow: hidden; }
+#ex-bar-fill { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+#toast {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 50;
+  background: var(--panel2); border: 1px solid #2e2e44; padding: 10px 18px; border-radius: 8px;
+}
+#toast[hidden] { display: none; }
+
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<section id="scr-home" class="screen">
+  <div class="home-wrap">
+    <div class="home-head">
+      <div class="logo">POOPDOG <span>V2</span></div>
+      <div class="dim">Music-aware visual show generator</div>
+    </div>
+    <div id="home-drop" class="home-drop">
+      <div class="big">🎵 New from audio</div>
+      <div class="dim">Drop an MP3 / WAV here, or click to browse.<br>
+        The mix is analysed, then a full show is generated — every clip editable.</div>
+      <input type="file" id="home-file" accept="audio/*" hidden>
+    </div>
+    <div class="home-row">
+      <h3>Templates</h3>
+      <div id="home-templates" class="cards"></div>
+    </div>
+    <div class="home-row">
+      <h3>Recent projects</h3>
+      <div id="home-recent" class="cards"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ANALYSIS ============ -->
+<section id="scr-analysis" class="screen" hidden>
+  <div class="an-wrap">
+    <div class="an-head">
+      <div><div class="logo small">ANALYSIS</div><div id="an-file" class="dim"></div></div>
+      <div class="an-stats">
+        <span class="stat"><b id="an-bpm">—</b> BPM</span>
+        <button class="mini" id="an-half">×½</button>
+        <button class="mini" id="an-double">×2</button>
+        <span class="stat" id="an-dur">—</span>
+        <span class="stat" id="an-secs">—</span>
+      </div>
+    </div>
+    <div id="an-status" class="dim">Decoding…</div>
+    <canvas id="an-canvas"></canvas>
+    <div class="an-hint dim">Drag section boundaries to move them · click a section to change its type · everything stays editable later</div>
+    <div class="an-actions">
+      <button id="an-empty" class="btn">Start empty</button>
+      <button id="an-generate" class="btn accent">⚡ Generate show</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EDITOR ============ -->
+<section id="scr-editor" class="screen" hidden>
+  <header id="ed-top">
+    <div class="logo small" id="ed-home">🌀 POOPDOG</div>
+    <div class="transport">
+      <button class="mini" id="tr-start">⏮</button>
+      <button class="mini wide" id="tr-play">▶</button>
+      <span id="tr-time" class="mono">0:00.00</span>
+      <span class="dim mono" id="tr-bpm"></span>
+    </div>
+    <div class="top-right">
+      <label class="chk"><input type="checkbox" id="ed-snap" checked>Snap</label>
+      <span class="dim">seed</span><input type="number" id="ed-seed" value="1" min="0" max="9999">
+      <button class="btn" id="ed-regen">⚡ Generate</button>
+      <button class="btn accent" id="ed-export">Export</button>
+    </div>
+  </header>
+
+  <div id="ed-main">
+    <aside id="ed-assets">
+      <input type="search" id="as-search" placeholder="Search generators…">
+      <div id="as-list"></div>
+    </aside>
+
+    <div id="ed-centre">
+      <div id="ed-preview-wrap">
+        <canvas id="ed-preview" width="1280" height="720"></canvas>
+        <div id="pv-hud">
+          <span id="pv-beat" class="beatdot"></span>
+          <span id="pv-section">—</span>
+          <span id="pv-fps" class="mono">60</span>
+          <button class="mini" id="pv-quality">Full</button>
+          <button class="mini" id="pv-full">⛶</button>
+        </div>
+      </div>
+    </div>
+
+    <aside id="ed-inspector">
+      <div id="in-empty" class="dim center">Select a clip to edit it</div>
+      <div id="in-body" hidden></div>
+    </aside>
+  </div>
+
+  <div id="ed-nav"><canvas id="nav-canvas"></canvas></div>
+  <div id="ed-timeline"><canvas id="tl-canvas"></canvas></div>
+</section>
+
+<!-- ============ EXPORT ============ -->
+<div id="scr-export" class="overlay" hidden>
+  <div class="ex-panel">
+    <h2>Export</h2>
+    <div id="ex-summary" class="dim"></div>
+    <div class="ex-presets" id="ex-presets"></div>
+    <div class="ex-grid">
+      <label>Resolution
+        <select id="ex-res">
+          <option value="1920x1080" selected>1920 × 1080</option>
+          <option value="2560x1440">2560 × 1440</option>
+          <option value="3840x2160">3840 × 2160 (4K)</option>
+          <option value="1080x1920">1080 × 1920 (vertical)</option>
+          <option value="1080x1080">1080 × 1080 (square)</option>
+        </select></label>
+      <label>Frame rate
+        <select id="ex-fps"><option>30</option><option selected>60</option></select></label>
+      <label>Quality <span id="ex-qv" class="dim">75</span>
+        <input type="range" id="ex-q" min="1" max="100" value="75"></label>
+      <label>Format
+        <select id="ex-format">
+          <option value="mp4" selected>MP4 (H.264)</option>
+          <option value="webm">WebM (fallback)</option>
+        </select></label>
+      <label>Range
+        <select id="ex-range"><option value="all" selected>Whole track</option><option value="30">First 30 s</option><option value="10">First 10 s</option></select></label>
+    </div>
+    <div id="ex-progress" hidden>
+      <div class="bar"><div id="ex-bar-fill"></div></div>
+      <div class="dim mono" id="ex-stats">—</div>
+    </div>
+    <div id="ex-note" class="dim"></div>
+    <div class="ex-actions">
+      <button class="btn" id="ex-close">Close</button>
+      <button class="btn accent" id="ex-start">Render MP4</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script>
+(function () {
+"use strict";
+// ===== js/core/prng.js =====
+// Seeded deterministic PRNG (mulberry32). The determinism law (spec §3):
+// every random visual decision flows from a seed stored in the project.
+
+function prng(seed) {
+  let a = (seed >>> 0) || 1;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Stable per-(seed, index) value without consuming a stream — lets a
+// generator ask "random value #k for particle #i" at any time t.
+function hash01(seed, i) {
+  let h = (seed ^ (i * 0x9E3779B9)) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x21f0aaad) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x735a2d97) >>> 0;
+  return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
+}
+
+// ===== js/core/palettes.js =====
+// Colour palettes (kept from V1 — spec §6.10). [h, s, l] per slot.
+
+const PALETTES = {
+  cyberpunk: { label: "Cyberpunk", colors: [[315,100,60],[185,100,55],[265,100,65],[55,100,60]], strobe: [185,100,85], bg: [255,60,4] },
+  synthwave: { label: "Synthwave", colors: [[300,100,62],[200,100,60],[260,90,62],[330,100,65]], strobe: [300,100,88], bg: [270,55,5] },
+  hardstyle: { label: "Hardstyle", colors: [[0,100,55],[45,100,55],[0,0,95],[15,100,60]], strobe: [0,0,100], bg: [0,45,4] },
+  techno:    { label: "Techno", colors: [[0,0,92],[210,15,70],[0,0,60],[200,30,80]], strobe: [0,0,100], bg: [220,15,3] },
+  psytrance: { label: "Psytrance", colors: [[120,100,55],[280,100,60],[30,100,55],[180,100,55]], strobe: [120,100,85], bg: [280,50,4] },
+  trance:    { label: "Trance", colors: [[210,100,60],[180,100,60],[240,90,65],[195,100,70]], strobe: [200,100,90], bg: [220,60,5] },
+  dnb:       { label: "Drum & Bass", colors: [[25,100,55],[55,100,55],[0,90,55],[40,100,65]], strobe: [45,100,85], bg: [20,40,4] },
+  acid:      { label: "Acid", colors: [[75,100,55],[60,100,50],[90,100,60],[50,100,55]], strobe: [70,100,85], bg: [90,50,3] },
+  neon:      { label: "Neon", colors: [[320,100,60],[160,100,55],[45,100,58],[210,100,60]], strobe: [0,0,100], bg: [260,40,4] },
+  blacklight:{ label: "Blacklight", colors: [[265,100,62],[285,100,58],[245,100,65],[300,90,60]], strobe: [270,100,88], bg: [265,70,4] },
+};
+
+function hsl(c, alpha = 1, lightBoost = 0, hueShift = 0) {
+  return `hsla(${(c[0] + hueShift) % 360}, ${c[1]}%, ${Math.min(100, c[2] + lightBoost)}%, ${alpha})`;
+}
+
+// Section palette rotation kept from V1's Auto Show.
+const AUTO_PALETTES = {
+  drop: ["hardstyle", "neon", "cyberpunk", "acid"],
+  build: ["synthwave", "trance"],
+  breakdown: ["blacklight", "trance"],
+  intro: ["techno"], outro: ["techno"],
+  groove: ["cyberpunk", "psytrance", "dnb", "synthwave"],
+  chorus: ["neon", "synthwave"],
+};
+
+const SECTION_LABELS = { intro: "Intro", build: "Build-up", drop: "DROP", breakdown: "Breakdown", groove: "Groove", chorus: "Chorus", outro: "Outro" };
+const SECTION_COLORS = { intro: "#3a3a55", build: "#c8a000", drop: "#ff2d95", breakdown: "#2a7a8c", groove: "#5a5a8c", chorus: "#7a4fd0", outro: "#3a3a55" };
+const SECTION_TYPES = ["intro", "build", "drop", "breakdown", "groove", "chorus", "outro"];
+
+// ===== js/core/modulation.js =====
+// Modulation system (spec §8). Pure functions of (analysis, t) — no state,
+// so scrubbing, preview and offline render all agree.
+
+const EVENT_SOURCES = ["kick", "snare", "hat", "beat", "bar", "drop"];
+const CURVE_SOURCES = ["bass", "mid", "high", "energy", "loudness", "buildProgress"];
+const ALL_SOURCES = [...EVENT_SOURCES, ...CURVE_SOURCES];
+
+// Envelope for event sources: attack/release in ms around each event.
+// Scans events near t (they're sorted); returns 0..1.
+function eventEnv(events, t, attackMs, releaseMs) {
+  const atk = attackMs / 1000, rel = releaseMs / 1000;
+  let v = 0;
+  // walk backwards from the latest event <= t + atk
+  let lo = 0, hi = events.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; (events[m].t <= t + atk) ? lo = m + 1 : hi = m; }
+  for (let i = lo - 1; i >= 0; i--) {
+    const e = events[i], dt = t - e.t;
+    if (dt > rel + atk) break;
+    let env;
+    if (dt < 0) env = 0;
+    else if (dt < atk) env = dt / Math.max(atk, 1e-4);
+    else env = Math.max(0, 1 - (dt - atk) / Math.max(rel, 1e-4));
+    v = Math.max(v, env * (e.strength ?? 1));
+  }
+  return v;
+}
+
+function beatEvents(beats, t, releaseS) {
+  // beats is a Float64Array of times; envelope decays over releaseS
+  let lo = 0, hi = beats.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; (beats[m] <= t) ? lo = m + 1 : hi = m; }
+  if (lo === 0) return 0;
+  const dt = t - beats[lo - 1];
+  return Math.max(0, 1 - dt / releaseS);
+}
+
+function curveAt(curve, frameDur, t) {
+  const f = t / frameDur;
+  const i = Math.floor(f);
+  if (i < 0) return curve[0] ?? 0;
+  if (i >= curve.length - 1) return curve[curve.length - 1] ?? 0;
+  const fr = f - i;
+  return curve[i] * (1 - fr) + curve[i + 1] * fr;
+}
+
+function sourceValue(analysis, source, t, attackMs = 0, releaseMs = 150) {
+  if (!analysis) return 0;
+  switch (source) {
+    case "kick": return eventEnv(analysis.events.kick, t, attackMs, releaseMs);
+    case "snare": return eventEnv(analysis.events.snare, t, attackMs, releaseMs);
+    case "hat": return eventEnv(analysis.events.hat, t, attackMs, releaseMs);
+    case "drop": return eventEnv(analysis.events.drop, t, attackMs, Math.max(releaseMs, 600));
+    case "beat": return beatEvents(analysis.beats, t, Math.max(releaseMs, 60) / 1000);
+    case "bar": return beatEvents(analysis.bars, t, Math.max(releaseMs, 120) / 1000);
+    case "bass": return curveAt(analysis.curves.bass, analysis.frameDur, t);
+    case "mid": return curveAt(analysis.curves.mid, analysis.frameDur, t);
+    case "high": return curveAt(analysis.curves.high, analysis.frameDur, t);
+    case "energy": return curveAt(analysis.curves.energy, analysis.frameDur, t);
+    case "loudness": return curveAt(analysis.curves.loudness, analysis.frameDur, t);
+    case "buildProgress": {
+      const s = analysis.sections.find(x => t >= x.start && t < x.end);
+      if (!s || s.type !== "build") return 0;
+      return (t - s.start) / Math.max(0.001, s.end - s.start);
+    }
+    default: return 0;
+  }
+}
+
+// slot: { param, source, amount (-1..1), attackMs, releaseMs }
+// Base parameter values are normalised against the param's range by the
+// caller; modulation adds amount*source of the range, clamped.
+function applyMods(clip, analysis, t, key, base, min, max) {
+  if (clip.mode === "manual" || !clip.mods) return base;
+  let v = base;
+  const range = max - min;
+  for (const m of clip.mods) {
+    if (m.param !== key || m.bypass) continue;
+    const s = sourceValue(analysis, m.source, t, m.attackMs ?? 0, m.releaseMs ?? 150);
+    v += m.amount * s * range * (clip.params.pulse ?? 1);
+  }
+  return Math.max(min, Math.min(max, v));
+}
+
+function makeSlot(param, source, amount = 0.5, attackMs = 0, releaseMs = 150) {
+  return { param, source, amount, attackMs, releaseMs, bypass: false };
+}
+
+// ===== js/core/analysis.js =====
+// Offline analysis service (spec §5). Pure: AudioBuffer -> Analysis.
+// Everything downstream (director, modulation, render) reads only this,
+// which is what makes preview and export bit-identical (§3 determinism).
+//
+// Analysis = {
+//   sampleRate, duration, frameDur,          // frameDur = hop/sr (~11.6ms)
+//   bpm, beats: Float64Array, bars: Float64Array,
+//   curves: { bass, mid, high, energy, loudness },  // Float32Array per frame, 0..1
+//   events: { kick, snare, hat, drop },      // [{t, strength}] sorted by t
+//   sections: [{ start, end, type }],
+//   waveform: Float32Array                   // ~2000 peak values for drawing
+// }
+
+const FFT_SIZE = 1024, HOP = 512;
+
+// ---- radix-2 FFT (real input, magnitudes out) ----
+function makeFFT(n) {
+  const rev = new Uint32Array(n);
+  for (let i = 0, j = 0; i < n; i++) {
+    rev[i] = j;
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j |= bit;
+  }
+  const cos = new Float32Array(n / 2), sin = new Float32Array(n / 2);
+  for (let i = 0; i < n / 2; i++) { cos[i] = Math.cos(-2 * Math.PI * i / n); sin[i] = Math.sin(-2 * Math.PI * i / n); }
+  const re = new Float32Array(n), im = new Float32Array(n);
+  return function fft(input, mags) {
+    for (let i = 0; i < n; i++) { re[i] = input[rev[i]]; im[i] = 0; }
+    for (let len = 2; len <= n; len <<= 1) {
+      const half = len >> 1, step = n / len;
+      for (let i = 0; i < n; i += len) {
+        for (let j = 0; j < half; j++) {
+          const k = j * step;
+          const tr = re[i + j + half] * cos[k] - im[i + j + half] * sin[k];
+          const ti = re[i + j + half] * sin[k] + im[i + j + half] * cos[k];
+          re[i + j + half] = re[i + j] - tr; im[i + j + half] = im[i + j] - ti;
+          re[i + j] += tr; im[i + j] += ti;
+        }
+      }
+    }
+    for (let i = 0; i < n / 2; i++) mags[i] = Math.hypot(re[i], im[i]) / n;
+  };
+}
+
+async function analyze(buffer, onProgress) {
+  const say = m => { if (onProgress) onProgress(m); };
+  const sr = buffer.sampleRate, n = buffer.length;
+  const mono = new Float32Array(n);
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < n; i++) mono[i] += d[i] / buffer.numberOfChannels;
+  }
+
+  say("Computing spectrum…");
+  const frames = Math.max(1, Math.floor((n - FFT_SIZE) / HOP));
+  const frameDur = HOP / sr;
+  const fft = makeFFT(FFT_SIZE);
+  const window = new Float32Array(FFT_SIZE);
+  for (let i = 0; i < FFT_SIZE; i++) window[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / FFT_SIZE);
+  const binHz = sr / FFT_SIZE;
+  const bin = hz => Math.max(0, Math.min(FFT_SIZE / 2 - 1, Math.round(hz / binHz)));
+
+  const BANDS = {                       // V1 bands kept (§5.1)
+    sub: [bin(30), bin(120)], lowmid: [bin(150), bin(400)],
+    bass: [bin(30), bin(150)], mid: [bin(400), bin(2500)],
+    high: [bin(4000), bin(12000)], veryhigh: [bin(6000), bin(14000)],
+    full: [bin(30), bin(14000)],
+  };
+  const bandE = {};
+  for (const k in BANDS) bandE[k] = new Float32Array(frames);
+
+  const frame = new Float32Array(FFT_SIZE), mags = new Float32Array(FFT_SIZE / 2);
+  for (let f = 0; f < frames; f++) {
+    const off = f * HOP;
+    for (let i = 0; i < FFT_SIZE; i++) frame[i] = mono[off + i] * window[i];
+    fft(frame, mags);
+    for (const k in BANDS) {
+      const [lo, hi] = BANDS[k];
+      let s = 0;
+      for (let b = lo; b <= hi; b++) s += mags[b];
+      bandE[k][f] = s / (hi - lo + 1);
+    }
+    if ((f & 2047) === 0) await tick();      // keep UI alive on long mixes
+  }
+
+  say("Detecting hits…");
+  const flux = {};
+  for (const k of ["sub", "lowmid", "veryhigh", "full"]) {
+    flux[k] = new Float32Array(frames);
+    for (let f = 1; f < frames; f++) flux[k][f] = Math.max(0, bandE[k][f] - bandE[k][f - 1]);
+  }
+  const kick = pickEvents(flux.sub, frameDur, 1.9, 0.16);
+  const snare = pickEvents(flux.lowmid, frameDur, 2.2, 0.20);
+  const hat = pickEvents(flux.veryhigh, frameDur, 2.0, 0.10);
+
+  say("Detecting BPM…");
+  const { bpm, beats, bars } = tempo(flux.full, frameDur, buffer.duration);
+
+  say("Finding structure…");
+  const energy = smoothNorm(bandE.full, Math.round(1 / frameDur));
+  const sections = detectSections(energy, frameDur, buffer.duration);
+  const drop = sections.filter(s => s.type === "drop")
+    .map(s => ({ t: s.start, strength: 1 }));
+
+  // normalised curves for modulation (0..1 against 95th percentile)
+  const curves = {
+    bass: normCurve(bandE.bass), mid: normCurve(bandE.mid),
+    high: normCurve(bandE.high), energy, loudness: normCurve(bandE.full),
+  };
+
+  // waveform peaks for drawing
+  const W = 2000, waveform = new Float32Array(W);
+  const per = Math.max(1, Math.floor(n / W));
+  for (let i = 0; i < W; i++) {
+    let m = 0;
+    for (let j = i * per; j < Math.min(n, (i + 1) * per); j += 16) m = Math.max(m, Math.abs(mono[j]));
+    waveform[i] = m;
+  }
+
+  return {
+    sampleRate: sr, duration: buffer.duration, frameDur,
+    bpm, beats, bars, curves,
+    events: { kick, snare, hat, drop },
+    sections, waveform,
+  };
+}
+
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+// adaptive-threshold peak picking over a flux curve (V1 rolling-average
+// idea, offline: local mean over ~1s window, refractory period)
+function pickEvents(flux, frameDur, sens, refractory) {
+  const win = Math.round(1 / frameDur);
+  const out = [];
+  let sum = 0;
+  const q = [];
+  let peak = 0;
+  for (let f = 0; f < flux.length; f++) peak = Math.max(peak, flux[f]);
+  if (peak <= 0) return out;
+  let lastT = -1;
+  for (let f = 0; f < flux.length; f++) {
+    sum += flux[f]; q.push(flux[f]);
+    if (q.length > win) sum -= q.shift();
+    const mean = sum / q.length;
+    const t = f * frameDur;
+    const isPeak = f > 0 && f < flux.length - 1 && flux[f] >= flux[f - 1] && flux[f] >= flux[f + 1];
+    if (isPeak && flux[f] > mean * sens && flux[f] > peak * 0.05 && t - lastT > refractory) {
+      out.push({ t, strength: Math.min(1, flux[f] / (peak * 0.6)) });
+      lastT = t;
+    }
+  }
+  return out;
+}
+
+// BPM via onset autocorrelation (kept from V1) + grid phase search
+function tempo(onset, frameDur, duration) {
+  const len = Math.min(onset.length, Math.round(90 / frameDur));
+  const minLag = Math.round(60 / (180 * frameDur)), maxLag = Math.round(60 / (80 * frameDur));
+  let bestLag = minLag, bestScore = -1;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let s = 0;
+    for (let i = 0; i < len - lag; i++) s += onset[i] * onset[i + lag];
+    s *= 1 + (maxLag - lag) / maxLag * 0.08;
+    if (s > bestScore) { bestScore = s; bestLag = lag; }
+  }
+  const bpm = Math.round(60 / (bestLag * frameDur) * 10) / 10;
+  const period = 60 / bpm;
+
+  // phase: maximise summed onset at grid positions over first 30s
+  const phaseSteps = Math.max(1, Math.round(period / frameDur));
+  let bestPhase = 0, bestP = -1;
+  for (let p = 0; p < phaseSteps; p++) {
+    let s = 0;
+    for (let t = p * frameDur; t < Math.min(30, duration); t += period) {
+      const f = Math.round(t / frameDur);
+      if (f < onset.length) s += onset[f];
+    }
+    if (s > bestP) { bestP = s; bestPhase = p; }
+  }
+  const t0 = bestPhase * frameDur;
+  const beats = [];
+  for (let t = t0; t < duration; t += period) beats.push(t);
+  const bars = beats.filter((_, i) => i % 4 === 0);
+  return { bpm, beats: Float64Array.from(beats), bars: Float64Array.from(bars) };
+}
+
+function smoothNorm(arr, win) {
+  const out = new Float32Array(arr.length);
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
+    sum += arr[i];
+    if (i >= win) sum -= arr[i - win];
+    out[i] = sum / Math.min(i + 1, win);
+  }
+  const peak = Math.max(...out) || 1;
+  for (let i = 0; i < out.length; i++) out[i] /= peak;
+  return out;
+}
+
+function normCurve(arr) {
+  const sorted = Float32Array.from(arr).sort();
+  const ref = sorted[Math.floor(sorted.length * 0.95)] || 1;
+  const out = new Float32Array(arr.length);
+  for (let i = 0; i < arr.length; i++) out[i] = Math.min(1, arr[i] / ref);
+  return out;
+}
+
+// V1 energy-quantile segmentation (§5.1), with build detection kept
+function detectSections(energy, frameDur, duration) {
+  const bf = Math.round(1 / frameDur), nB = Math.ceil(energy.length / bf);
+  const bE = new Float32Array(nB);
+  for (let b = 0; b < nB; b++) {
+    let s = 0, c = 0;
+    for (let f = b * bf; f < Math.min(energy.length, (b + 1) * bf); f++) { s += energy[f]; c++; }
+    bE[b] = c ? s / c : 0;
+  }
+  const sorted = Array.from(bE).sort((a, b) => a - b);
+  const q = p => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
+  const hi = q(0.65), lo = q(0.30);
+  const labels = Array.from(bE, e => e >= hi ? "high" : e <= lo ? "low" : "mid");
+  let runs = [];
+  for (let b = 0; b < nB; b++) {
+    if (runs.length && runs[runs.length - 1].label === labels[b]) runs[runs.length - 1].len++;
+    else runs.push({ label: labels[b], start: b, len: 1 });
+  }
+  runs = runs.filter(r => r.len >= 4 || runs.length === 1);
+  if (!runs.length) runs.push({ label: "mid", start: 0, len: nB });
+  runs[0].start = 0;
+  for (let i = 0; i < runs.length; i++) {
+    const end = i + 1 < runs.length ? runs[i + 1].start : nB;
+    runs[i].len = end - runs[i].start;
+  }
+  const sections = [];
+  let seenHigh = false;
+  for (let i = 0; i < runs.length; i++) {
+    const r = runs[i], start = r.start, end = Math.min(duration, r.start + r.len);
+    let type;
+    if (r.label === "high") { type = "drop"; seenHigh = true; }
+    else if (r.label === "low") type = i === 0 ? "intro" : i === runs.length - 1 ? "outro" : seenHigh ? "breakdown" : "intro";
+    else type = runs[i + 1] && runs[i + 1].label === "high" ? "build" : "groove";
+    sections.push({ start, end, type });
+  }
+  return sections.length ? sections : [{ start: 0, end: duration, type: "groove" }];
+}
+
+const sectionAt = (sections, t) =>
+  sections.find(s => t >= s.start && t < s.end) ||
+  (sections.length && t < sections[0].start ? sections[0] : sections[sections.length - 1]) || null;
+
+// ===== js/core/project.js =====
+// Project model (spec §9, §16). Tracks own clips; clips reference a
+// generator id, carry params, modulation slots, a seed, and a mode.
+// Undo is snapshot-based over the serializable part.
+
+let nextId = 1;
+const uid = () => nextId++;
+
+const TRACK_TYPES = ["camera", "adjust", "visual", "transition"];
+
+function makeProject(name = "Untitled") {
+  return {
+    name,
+    audioName: null,
+    palette: "cyberpunk",
+    seed: 1,
+    tracks: [],            // top of list renders last (on top)
+    analysisOverrides: null,
+  };
+}
+
+function makeTrack(type, name) {
+  return { id: uid(), type, name, mute: false, solo: false, lock: false, clips: [] };
+}
+
+function makeClip(genId, start, end, params = {}, opts = {}) {
+  return {
+    id: uid(), gen: genId, start, end,
+    params,                // key -> value (universal + specific), sparse over defaults
+    mods: opts.mods || [], // modulation slots (§8)
+    mode: opts.mode || "auto",   // auto | manual
+    seed: opts.seed ?? 1,
+    auto: opts.auto || false,    // Director badge: regenerate may replace while true
+    fadeIn: opts.fadeIn ?? 0, fadeOut: opts.fadeOut ?? 0,
+  };
+}
+
+// Standard track set the Director targets (spec §9.8)
+function defaultTracks() {
+  return [
+    makeTrack("transition", "Transitions"),
+    makeTrack("adjust", "FX / Colour"),
+    makeTrack("camera", "Camera"),
+    makeTrack("visual", "Accents"),
+    makeTrack("visual", "Main"),
+    makeTrack("visual", "Background"),
+  ];
+}
+
+function clipsAt(project, t) {
+  // returns active clips bottom-to-top: visual tracks (list bottom = first),
+  // then adjust, transition; camera handled separately
+  const layers = { visual: [], adjust: [], transition: [], camera: [] };
+  const anySolo = project.tracks.some(tr => tr.solo);
+  for (let i = project.tracks.length - 1; i >= 0; i--) {   // bottom-up
+    const tr = project.tracks[i];
+    if (tr.mute || (anySolo && !tr.solo)) continue;
+    for (const c of tr.clips) {
+      if (t >= c.start && t < c.end) layers[tr.type].push(c);
+    }
+  }
+  return layers;
+}
+
+function findClip(project, id) {
+  for (const tr of project.tracks)
+    for (const c of tr.clips)
+      if (c.id === id) return { track: tr, clip: c };
+  return null;
+}
+
+function removeClip(project, id) {
+  for (const tr of project.tracks) {
+    const i = tr.clips.findIndex(c => c.id === id);
+    if (i >= 0) { tr.clips.splice(i, 1); return true; }
+  }
+  return false;
+}
+
+function sortTrack(tr) { tr.clips.sort((a, b) => a.start - b.start); }
+
+// ---------- serialization ----------
+function serialize(project) {
+  return JSON.stringify(project);
+}
+function deserialize(json) {
+  const p = JSON.parse(json);
+  // bump uid counter past everything loaded
+  let max = 0;
+  for (const tr of p.tracks) {
+    max = Math.max(max, tr.id);
+    for (const c of tr.clips) max = Math.max(max, c.id);
+  }
+  nextId = max + 1;
+  return p;
+}
+
+// ---------- undo (snapshots, spec §15.5 scaled down) ----------
+const UNDO_CAP = 100;
+function makeHistory(project) {
+  return { undo: [], redo: [], last: serialize(project) };
+}
+function commit(history, project) {
+  const now = serialize(project);
+  if (now === history.last) return;
+  history.undo.push(history.last);
+  if (history.undo.length > UNDO_CAP) history.undo.shift();
+  history.redo.length = 0;
+  history.last = now;
+}
+function undo(history, project) {
+  if (!history.undo.length) return null;
+  history.redo.push(history.last);
+  history.last = history.undo.pop();
+  return deserialize(history.last);
+}
+function redo(history) {
+  if (!history.redo.length) return null;
+  history.undo.push(history.last);
+  history.last = history.redo.pop();
+  return deserialize(history.last);
+}
+
+// ---------- autosave (spec §15.6, localStorage-backed in this build) ----------
+const RECENT_KEY = "poopdog.v2.recent";
+function autosave(project) {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]")
+      .filter(e => e.name !== project.name);
+    list.unshift({
+      name: project.name, audioName: project.audioName,
+      savedAt: Date.now(), project: serialize(project),
+    });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8)));
+  } catch (e) { /* storage full: autosave is best-effort */ }
+}
+function recentProjects() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); }
+  catch (e) { return []; }
+}
+
+// ===== js/core/generators.js =====
+// Generator registry (spec §6). Every generator is:
+//   { id, name, category, track ("visual"|"adjust"|"transition"|"camera"),
+//     params: [{key,label,min,max,step,def} | {key,label,select,def}],
+//     defaultMods: [slot...],       — factory audio bindings (§8.4)
+//     draw(g) }                     — pure function of g (no retained state)
+//
+// g = { ctx, w, h, t (clip-local, speed-applied), T (global), p (params),
+//       a (audio source values), c(i,alpha,boost) palette colour,
+//       glowPx, seed, h01(i), clip, events, beats, bpm, progress }
+
+
+const TAU = Math.PI * 2;
+const REGISTRY = new Map();
+const def = g => REGISTRY.set(g.id, g);
+const P = (key, label, min, max, def_, step = 0.01) => ({ key, label, min, max, def: def_, step });
+
+function beams(g, count, fn) {
+  const { ctx } = g;
+  ctx.save();
+  ctx.lineCap = "round";
+  for (let i = 0; i < count; i++) {
+    ctx.strokeStyle = g.c(i, 0.4 + g.a.loudness * 0.55, 10);
+    ctx.lineWidth = 1.5 + g.a.bass * 8 * g.p.intensity;
+    ctx.shadowBlur = g.glowPx;
+    ctx.shadowColor = g.c(i, 0.8);
+    ctx.beginPath();
+    fn(i, ctx);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+// ============================== LASERS ==============================
+
+def({
+  id: "laser.fan", name: "Fan Lasers", category: "Lasers", track: "visual",
+  params: [P("beams", "Beams", 2, 14, 6, 1), P("spread", "Spread", 0.1, 1.5, 0.9), P("sway", "Sway rate", 0, 3, 1)],
+  defaultMods: [makeSlot("intensity", "kick", 0.35, 0, 140)],
+  draw(g) {
+    const { w, h } = g, rot = g.t * 0.4;
+    beams(g, g.p.beams * 2, (i, ctx) => {
+      const side = i % 2, k = (i / 2) | 0, ox = side ? w : 0, dir = side ? -1 : 1;
+      const a = -Math.PI / 2 + dir * (Math.sin(rot * g.p.sway + k * 0.35) * g.p.spread * 0.5 + 0.35);
+      ctx.moveTo(ox, h);
+      ctx.lineTo(ox + Math.cos(a) * h * 1.9, h + Math.sin(a) * h * 1.9);
+    });
+  },
+});
+
+def({
+  id: "laser.cross", name: "Cross Lasers", category: "Lasers", track: "visual",
+  params: [P("beams", "Beams", 2, 12, 6, 1), P("sway", "Sway", 0, 80, 30, 1)],
+  defaultMods: [makeSlot("intensity", "kick", 0.3, 0, 140)],
+  draw(g) {
+    const { w, h } = g;
+    beams(g, g.p.beams * 2, (i, ctx) => {
+      const horiz = i % 2 === 0, k = (i / 2) | 0, p = (k + 1) / (g.p.beams + 1);
+      const sw = Math.sin(g.t * 1.5 + k * 1.7) * g.p.sway;
+      if (horiz) { ctx.moveTo(0, p * h + sw); ctx.lineTo(w, p * h - sw); }
+      else { ctx.moveTo(p * w + sw, 0); ctx.lineTo(p * w - sw, h); }
+    });
+  },
+});
+
+def({
+  id: "laser.burst", name: "Laser Burst", category: "Lasers", track: "visual",
+  params: [P("rays", "Rays", 4, 24, 10, 1), P("spin", "Spin", 0, 4, 1.2)],
+  defaultMods: [makeSlot("opacity", "kick", 0.6, 0, 180), makeSlot("intensity", "kick", 0.5, 0, 160)],
+  draw(g) {
+    const { w, h } = g, n = Math.round(g.p.rays * (0.5 + g.a.kick * 0.8));
+    beams(g, n, (i, ctx) => {
+      const a = (i / n) * TAU + g.t * g.p.spin + g.h01(i) * 0.5;
+      ctx.moveTo(w / 2, h / 2);
+      ctx.lineTo(w / 2 + Math.cos(a) * w, h / 2 + Math.sin(a) * w);
+    });
+  },
+});
+
+def({
+  id: "laser.circle", name: "Circle Lasers", category: "Lasers", track: "visual",
+  params: [P("rings", "Rings", 2, 10, 6, 1), P("arc", "Arc", 0.2, 1, 0.7)],
+  defaultMods: [makeSlot("scale", "kick", 0.18, 0, 150)],
+  draw(g) {
+    const { w, h } = g;
+    beams(g, g.p.rings, (i, ctx) => {
+      const r = (i + 1) / g.p.rings * Math.min(w, h) * 0.45;
+      ctx.arc(w / 2, h / 2, r, g.t * 0.5 + i, g.t * 0.5 + i + TAU * g.p.arc);
+    });
+  },
+});
+
+def({
+  id: "laser.spiral", name: "Spiral Lasers", category: "Lasers", track: "visual",
+  params: [P("arms", "Arms", 1, 6, 3, 1), P("turns", "Turns", 1, 6, 2.5)],
+  defaultMods: [makeSlot("intensity", "bass", 0.4)],
+  draw(g) {
+    const { w, h, ctx } = g;
+    beams(g, g.p.arms, (arm, c) => {
+      for (let i = 0; i <= 70; i++) {
+        const p = i / 70, a = g.t + arm * (TAU / g.p.arms) + p * TAU * g.p.turns;
+        const r = p * Math.min(w, h) * 0.55 * (1 + g.a.bass * 0.3);
+        const x = w / 2 + Math.cos(a) * r, y = h / 2 + Math.sin(a) * r;
+        i === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
+      }
+    });
+  },
+});
+
+def({
+  id: "laser.stadium", name: "Stadium Skybeams", category: "Lasers", track: "visual",
+  params: [P("beams", "Beams", 3, 16, 8, 1), P("wander", "Wander", 0, 1, 0.5)],
+  defaultMods: [makeSlot("intensity", "kick", 0.4, 0, 200)],
+  draw(g) {
+    const { w, h } = g;
+    beams(g, g.p.beams, (i, ctx) => {
+      const x = (i + 0.5) / g.p.beams * w;
+      const tilt = Math.sin(g.t * (0.4 + g.h01(i) * 0.5) + i * 2.1) * g.p.wander * 0.7;
+      ctx.moveTo(x, h);
+      ctx.lineTo(x + Math.sin(tilt) * h, h - Math.cos(tilt) * h * 1.3);
+    });
+    // horizon glow line
+    const ctx = g.ctx;
+    ctx.fillStyle = g.c(1, 0.25 + g.a.bass * 0.3, 15);
+    ctx.fillRect(0, h - 3, w, 3);
+  },
+});
+
+def({
+  id: "laser.matrix", name: "Beam Matrix", category: "Lasers", track: "visual",
+  params: [P("rows", "Rows", 2, 8, 4, 1), P("cols", "Cols", 2, 8, 4, 1)],
+  defaultMods: [makeSlot("opacity", "beat", 0.35, 0, 120)],
+  draw(g) {
+    const { w, h } = g, n = g.p.rows + g.p.cols;
+    beams(g, n, (i, ctx) => {
+      const drift = Math.sin(g.t * 0.8 + i) * 30;
+      if (i < g.p.rows) { const y = (i + 0.5) / g.p.rows * h + drift; ctx.moveTo(0, y); ctx.lineTo(w, y); }
+      else { const x = (i - g.p.rows + 0.5) / g.p.cols * w + drift; ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+    });
+  },
+});
+
+// ============================== TUNNELS ==============================
+
+function tunnelRings(g, drawRing) {
+  const { ctx, w, h } = g;
+  const cx = w / 2 + Math.sin(g.t * 0.4) * w * 0.05, cy = h / 2 + Math.cos(g.t * 0.31) * h * 0.05;
+  const maxR = Math.hypot(w, h) * 0.6, rings = 13;
+  const travel = g.t * 0.22 * (g.bpm / 120) * (1 + g.a.kick * 1.2);
+  ctx.save();
+  for (let i = 0; i < rings; i++) {
+    const depth = ((i / rings) + travel) % 1;
+    const r = Math.pow(depth, 2.4) * maxR * (1 + g.a.kick * 0.15);
+    if (r < 2) continue;
+    ctx.strokeStyle = g.c(i, Math.min(0.85, depth * 1.1) * (0.45 + g.a.loudness * 0.55), depth * 15);
+    ctx.lineWidth = 1 + depth * (3 + g.a.bass * 6);
+    ctx.shadowBlur = g.glowPx * depth;
+    ctx.shadowColor = g.c(i, 0.8);
+    ctx.beginPath();
+    drawRing(cx, cy, r, depth, i, ctx);
+    ctx.stroke();
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
+  return { cx, cy, maxR };
+}
+
+const poly = (ctx, cx, cy, r, sides, rot) => {
+  for (let k = 0; k <= sides; k++) {
+    const a = rot + (k / sides) * TAU;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+};
+
+def({
+  id: "tunnel.rings", name: "Neon Ring Tunnel", category: "Tunnels", track: "visual",
+  params: [P("twist", "Twist", 0, 3, 1)],
+  defaultMods: [makeSlot("intensity", "bass", 0.3)],
+  draw(g) { tunnelRings(g, (cx, cy, r, d, i, ctx) => ctx.arc(cx, cy, r, 0, TAU)); },
+});
+def({
+  id: "tunnel.hex", name: "Hex Tunnel", category: "Tunnels", track: "visual",
+  params: [P("twist", "Twist", 0, 3, 1.5)],
+  defaultMods: [makeSlot("intensity", "bass", 0.3)],
+  draw(g) { tunnelRings(g, (cx, cy, r, d, i, ctx) => poly(ctx, cx, cy, r, 6, g.t * 0.3 + d * g.p.twist)); },
+});
+def({
+  id: "tunnel.grid", name: "Grid Tunnel", category: "Tunnels", track: "visual",
+  params: [P("spokes", "Spokes", 4, 12, 8, 1)],
+  defaultMods: [makeSlot("intensity", "kick", 0.35, 0, 150)],
+  draw(g) {
+    const { cx, cy, maxR } = tunnelRings(g, (x, y, r, d, i, ctx) => poly(ctx, x, y, r, 4, Math.PI / 4));
+    const ctx = g.ctx;
+    ctx.strokeStyle = g.c(1, 0.25 + g.a.bass * 0.3);
+    ctx.lineWidth = 1.5;
+    for (let d = 0; d < g.p.spokes; d++) {
+      const a = d / g.p.spokes * TAU + Math.PI / 4;
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * maxR, cy + Math.sin(a) * maxR);
+      ctx.stroke();
+    }
+  },
+});
+def({
+  id: "tunnel.star", name: "Star Tunnel", category: "Tunnels", track: "visual",
+  params: [P("stars", "Streaks", 40, 220, 120, 1), P("rush", "Rush", 0.2, 4, 1.4)],
+  defaultMods: [makeSlot("rush", "energy", 0.5)],
+  draw(g) {
+    const { ctx, w, h } = g, cx = w / 2, cy = h / 2, n = g.p.stars | 0;
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let i = 0; i < n; i++) {
+      const a = g.h01(i) * TAU;
+      const cycle = 1.6 / g.p.rush;
+      const z = 1 - ((g.t / cycle + g.h01(i + 9000)) % 1);        // 1 far -> 0 near
+      const r0 = Math.pow(1 - z, 2.2) * Math.hypot(w, h) * 0.7;
+      const r1 = Math.pow(Math.min(1, 1 - z + 0.05 + g.a.kick * 0.06), 2.2) * Math.hypot(w, h) * 0.7;
+      ctx.strokeStyle = g.c(i % 4, (1 - z) * 0.9, (1 - z) * 25);
+      ctx.lineWidth = (1 - z) * 3 + 0.4;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  },
+});
+def({
+  id: "tunnel.warp", name: "Warp Gate", category: "Tunnels", track: "visual",
+  params: [P("rings", "Rings", 4, 20, 10, 1)],
+  defaultMods: [makeSlot("scale", "kick", 0.15, 0, 160)],
+  draw(g) {
+    const { ctx, w, h } = g, cx = w / 2, cy = h / 2;
+    ctx.save();
+    for (let i = 0; i < g.p.rings; i++) {
+      const ph = (g.t * 0.5 + i / g.p.rings) % 1;
+      const r = ph * Math.min(w, h) * 0.55;
+      ctx.strokeStyle = g.c(i, (1 - ph) * 0.8, 10 + g.a.high * 20);
+      ctx.lineWidth = 2 + (1 - ph) * 6;
+      ctx.shadowBlur = g.glowPx * (1 - ph);
+      ctx.shadowColor = g.c(i, 0.8);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, r, r * 0.6, Math.sin(g.t * 0.3) * 0.4, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+// ============================== GEOMETRY ==============================
+
+def({
+  id: "geo.rings", name: "Pulse Rings", category: "Geometry", track: "visual",
+  params: [P("rings", "Rings", 1, 8, 4, 1)],
+  defaultMods: [makeSlot("scale", "kick", 0.25, 0, 200)],
+  draw(g) {
+    const { ctx, w, h } = g;
+    ctx.save();
+    for (let i = 0; i < g.p.rings; i++) {
+      const r = (i + 1) / g.p.rings * Math.min(w, h) * 0.35 * (1 + g.a.kick * 0.2);
+      ctx.strokeStyle = g.c(i, 0.7, g.a.high * 25);
+      ctx.lineWidth = 2.5 + g.a.bass * 5;
+      ctx.shadowBlur = g.glowPx;
+      ctx.shadowColor = g.c(i, 0.8);
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, r, 0, TAU); ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "geo.terrain", name: "Wireframe Terrain", category: "Geometry", track: "visual",
+  params: [P("rows", "Rows", 6, 24, 14, 1), P("amp", "Height", 0, 1, 0.5)],
+  defaultMods: [makeSlot("amp", "bass", 0.5)],
+  draw(g) {
+    const { ctx, w, h } = g, rows = g.p.rows | 0, cols = 24;
+    ctx.save();
+    ctx.lineWidth = 1.4;
+    for (let r = 0; r < rows; r++) {
+      const z = (r + (g.t * 2) % 1) / rows;                 // 0 near horizon
+      const y = h * 0.45 + Math.pow(z, 1.6) * h * 0.55;
+      const persp = 0.15 + z * 0.85;
+      ctx.strokeStyle = g.c(r % 4, 0.25 + z * 0.6, z * 10);
+      ctx.shadowBlur = g.glowPx * z * 0.5;
+      ctx.shadowColor = g.c(r % 4, 0.6);
+      ctx.beginPath();
+      for (let cIdx = 0; cIdx <= cols; cIdx++) {
+        const u = cIdx / cols;
+        const x = w / 2 + (u - 0.5) * w * 1.4 * persp;
+        const noise = Math.sin(u * 9 + g.t * 1.3 + r) * Math.cos(u * 5 - g.t) * g.p.amp;
+        const yy = y - Math.abs(noise) * h * 0.18 * z * (0.4 + g.a.bass);
+        cIdx === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+      }
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "geo.poly", name: "Wire Polyhedron", category: "Geometry", track: "visual",
+  params: [P("sides", "Sides", 3, 9, 6, 1), P("layers", "Layers", 1, 5, 3, 1)],
+  defaultMods: [makeSlot("intensity", "kick", 0.3, 0, 150)],
+  draw(g) {
+    const { ctx, w, h } = g, R = Math.min(w, h) * 0.3;
+    ctx.save();
+    for (let l = 0; l < g.p.layers; l++) {
+      const r = R * (1 - l * 0.25) * (1 + g.a.kick * 0.15);
+      ctx.strokeStyle = g.c(l, 0.7, 10);
+      ctx.lineWidth = 2;
+      ctx.shadowBlur = g.glowPx;
+      ctx.shadowColor = g.c(l, 0.8);
+      ctx.beginPath();
+      poly(ctx, w / 2, h / 2, r, g.p.sides | 0, g.t * (0.4 + l * 0.25) * (l % 2 ? -1 : 1));
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "geo.mandala", name: "Mandala", category: "Geometry", track: "visual",
+  params: [P("petals", "Petals", 4, 16, 8, 1), P("depth", "Depth", 1, 4, 2, 1)],
+  defaultMods: [makeSlot("hueShift", "snare", 0.3, 0, 300)],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.petals | 0, R = Math.min(w, h) * 0.38;
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(g.t * 0.15);
+    for (let d = 0; d < g.p.depth; d++) {
+      const r = R * (1 - d * 0.3);
+      ctx.strokeStyle = g.c(d, 0.65, g.a.high * 20);
+      ctx.lineWidth = 1.8;
+      ctx.shadowBlur = g.glowPx * 0.7;
+      ctx.shadowColor = g.c(d, 0.7);
+      for (let i = 0; i < n; i++) {
+        const a = i / n * TAU;
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, r * 0.5, r * 0.22 * (1 + g.a.bass * 0.5), a, 0, TAU);
+        ctx.stroke();
+      }
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+// ============================== PARTICLES ==============================
+// Deterministic: particle i state at time t is a pure function of
+// (seed, i, t) — scrubbing and export sample identically (spec §3).
+
+def({
+  id: "part.sparks", name: "Kick Sparks", category: "Particles", track: "visual",
+  params: [P("perBurst", "Per burst", 6, 60, 26, 1), P("life", "Life (s)", 0.3, 2.5, 1.1), P("vel", "Velocity", 50, 600, 260, 1)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g;
+    ctx.save();
+    const life = g.p.life, K = g.p.perBurst | 0;
+    for (const e of g.events.kick) {
+      const age = g.T - e.t;
+      if (age < 0 || age > life) continue;
+      const bSeed = Math.round(e.t * 997);
+      for (let i = 0; i < K; i++) {
+        const a = hash01(g.seed + bSeed, i) * TAU;
+        const v = g.p.vel * (0.4 + hash01(g.seed + bSeed, i + 500) * 0.8) * (0.5 + e.strength);
+        const x = w / 2 + Math.cos(a) * v * age, y = h / 2 + Math.sin(a) * v * age + 40 * age * age;
+        const lf = 1 - age / life;
+        ctx.fillStyle = g.c(i % 4, lf * 0.9, g.a.high * 25);
+        ctx.shadowBlur = g.glowPx * 0.5;
+        ctx.shadowColor = g.c(i % 4, 0.8);
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(0.4, (1 + hash01(g.seed + bSeed, i + 900) * 2.5) * lf), 0, TAU);
+        ctx.fill();
+      }
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "part.starfield", name: "Starfield", category: "Particles", track: "visual",
+  params: [P("count", "Stars", 40, 300, 140, 1)],
+  defaultMods: [makeSlot("intensity", "high", 0.3)],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.count | 0;
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+      const x = g.h01(i) * w, y = g.h01(i + 5000) * h;
+      const tw = 0.4 + 0.6 * Math.sin(g.t * (1 + g.h01(i + 999) * 3) + g.h01(i) * TAU) ** 2;
+      ctx.fillStyle = g.c(i % 4, tw * (0.5 + g.a.high * 0.5), 20);
+      ctx.beginPath();
+      ctx.arc(x, y, 0.6 + g.h01(i + 70) * 1.8 * tw, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  },
+});
+
+def({
+  id: "part.confetti", name: "Confetti", category: "Particles", track: "visual",
+  params: [P("count", "Pieces", 30, 200, 90, 1), P("fall", "Fall speed", 20, 200, 80, 1)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.count | 0;
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+      const speed = g.p.fall * (0.5 + g.h01(i));
+      const y = ((g.h01(i + 300) * h + g.t * speed) % (h + 30)) - 15;
+      const x = g.h01(i) * w + Math.sin(g.t * 2 + i) * 22;
+      ctx.fillStyle = g.c(i % 4, 0.85, 5);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(g.t * (1 + g.h01(i + 60) * 3) + i);
+      ctx.fillRect(-4, -2, 8, 4);
+      ctx.restore();
+    }
+    ctx.restore();
+  },
+});
+
+def({
+  id: "part.embers", name: "Rising Embers", category: "Particles", track: "visual",
+  params: [P("count", "Embers", 20, 160, 70, 1)],
+  defaultMods: [makeSlot("intensity", "bass", 0.3)],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.count | 0;
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+      const speed = 30 + g.h01(i) * 70;
+      const y = h + 10 - ((g.h01(i + 44) * h + g.t * speed) % (h + 30));
+      const x = g.h01(i) * w + Math.sin(g.t * 1.4 + i * 2.6) * 30;
+      const a = 0.3 + 0.7 * ((y / h));
+      ctx.fillStyle = g.c(i % 4, a * (0.5 + g.a.bass * 0.5), 15);
+      ctx.shadowBlur = g.glowPx * 0.4;
+      ctx.shadowColor = g.c(i % 4, 0.7);
+      ctx.beginPath();
+      ctx.arc(x, y, 1 + g.h01(i + 8) * 2.2, 0, TAU);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "part.shockwave", name: "Kick Shockwaves", category: "Particles", track: "visual",
+  params: [P("speed", "Expand", 100, 1200, 500, 1), P("width", "Width", 1, 16, 6)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g;
+    ctx.save();
+    for (const e of g.events.kick) {
+      const age = g.T - e.t;
+      if (age < 0 || age > 1.2) continue;
+      const r = age * g.p.speed, a = Math.max(0, 1 - age / 1.2) * e.strength;
+      ctx.strokeStyle = g.c(2, a * 0.85, 20);
+      ctx.lineWidth = g.p.width * (1 - age * 0.6);
+      ctx.shadowBlur = g.glowPx;
+      ctx.shadowColor = g.c(2, 0.8);
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, r, 0, TAU); ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+// ============================== BACKGROUNDS ==============================
+
+def({
+  id: "bg.gradient", name: "Gradient Field", category: "Backgrounds", track: "visual",
+  params: [P("drift", "Drift", 0, 2, 0.6)],
+  defaultMods: [makeSlot("intensity", "energy", 0.4)],
+  draw(g) {
+    const { ctx, w, h } = g;
+    const cx = w / 2 + Math.sin(g.t * g.p.drift) * w * 0.2;
+    const cy = h / 2 + Math.cos(g.t * g.p.drift * 0.7) * h * 0.2;
+    const grad = ctx.createRadialGradient(cx, cy, 0, w / 2, h / 2, Math.hypot(w, h) * 0.6);
+    grad.addColorStop(0, g.c(0, 0.35 * g.p.intensity, 0));
+    grad.addColorStop(0.6, g.c(1, 0.18 * g.p.intensity, -10));
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  },
+});
+
+def({
+  id: "bg.grid", name: "Perspective Grid", category: "Backgrounds", track: "visual",
+  params: [P("lines", "Lines", 6, 24, 12, 1)],
+  defaultMods: [makeSlot("intensity", "bass", 0.35)],
+  draw(g) {
+    const { ctx, w, h } = g, horizon = h * 0.45;
+    ctx.save();
+    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = g.c(1, 0.5, 5);
+    ctx.shadowBlur = g.glowPx * 0.4;
+    ctx.shadowColor = g.c(1, 0.6);
+    for (let i = 0; i < g.p.lines; i++) {           // scrolling horizontals
+      const z = ((i / g.p.lines) + g.t * 0.4) % 1;
+      const y = horizon + Math.pow(z, 2) * (h - horizon);
+      ctx.globalAlpha = z;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    ctx.globalAlpha = 0.6;
+    for (let i = -8; i <= 8; i++) {                 // verticals converging
+      ctx.beginPath(); ctx.moveTo(w / 2 + i * 30, horizon); ctx.lineTo(w / 2 + i * w * 0.12, h);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "bg.nebula", name: "Nebula", category: "Backgrounds", track: "visual",
+  params: [P("blobs", "Density", 3, 12, 6, 1)],
+  defaultMods: [makeSlot("intensity", "energy", 0.4)],
+  draw(g) {
+    const { ctx, w, h } = g;
+    for (let i = 0; i < g.p.blobs; i++) {
+      const x = (g.h01(i) + Math.sin(g.t * 0.13 + i * 2.4) * 0.12) * w;
+      const y = (g.h01(i + 31) + Math.cos(g.t * 0.11 + i * 1.7) * 0.12) * h;
+      const r = (0.18 + g.h01(i + 77) * 0.25) * Math.min(w, h) * (1 + g.a.bass * 0.15);
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+      grad.addColorStop(0, g.c(i % 4, 0.16 * g.p.intensity, 5));
+      grad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+  },
+});
+
+def({
+  id: "bg.matrix", name: "Matrix Rain", category: "Backgrounds", track: "visual",
+  params: [P("cols", "Columns", 12, 60, 32, 1)],
+  defaultMods: [makeSlot("intensity", "high", 0.3)],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.cols | 0, cw = w / n;
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+      const speed = 120 + g.h01(i) * 260;
+      const head = (g.h01(i + 12) * h + g.t * speed) % (h + 160);
+      for (let k = 0; k < 9; k++) {
+        const y = head - k * 16;
+        if (y < -16 || y > h) continue;
+        ctx.fillStyle = g.c(i % 4, (1 - k / 9) * 0.8, k === 0 ? 35 : 0);
+        ctx.fillRect(i * cw + cw * 0.25, y, cw * 0.5, 9);
+      }
+    }
+    ctx.restore();
+  },
+});
+
+def({
+  id: "bg.sun", name: "Synthwave Sun", category: "Backgrounds", track: "visual",
+  params: [P("size", "Size", 0.1, 0.5, 0.26), P("slats", "Slats", 0, 10, 6, 1)],
+  defaultMods: [makeSlot("size", "bass", 0.15)],
+  draw(g) {
+    const { ctx, w, h } = g, r = g.p.size * Math.min(w, h), cx = w / 2, cy = h * 0.42;
+    ctx.save();
+    const grad = ctx.createLinearGradient(0, cy - r, 0, cy + r);
+    grad.addColorStop(0, g.c(0, 0.95, 15));
+    grad.addColorStop(1, g.c(3, 0.9, 0));
+    ctx.fillStyle = grad;
+    ctx.shadowBlur = g.glowPx * 1.5;
+    ctx.shadowColor = g.c(0, 0.9);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = "destination-out";     // slats cut out
+    for (let i = 0; i < g.p.slats; i++) {
+      const y = cy + r * 0.15 + i * (r * 0.85 / Math.max(1, g.p.slats));
+      ctx.fillRect(cx - r, y, r * 2, 2 + i * 1.5);
+    }
+    ctx.restore();
+  },
+});
+
+// ============================== SPECTRUM ==============================
+
+def({
+  id: "spec.bars", name: "Bar Equalizer", category: "Spectrum", track: "visual",
+  params: [P("bars", "Bars", 8, 48, 24, 1)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.bars | 0, bw = w / n;
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+      const u = i / n;
+      // pseudo-spectrum from the three band curves, shaped per bar
+      const v = u < 0.33 ? g.a.bass * (1 - u) : u < 0.66 ? g.a.mid : g.a.high * (0.5 + g.h01(i) * 0.8);
+      const bh = Math.pow(v, 1.2) * h * 0.7 * g.p.intensity;
+      ctx.fillStyle = g.c(i % 4, 0.8, v * 25);
+      ctx.shadowBlur = g.glowPx * 0.5;
+      ctx.shadowColor = g.c(i % 4, 0.7);
+      ctx.fillRect(i * bw + bw * 0.15, h - bh, bw * 0.7, bh);
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+def({
+  id: "spec.circle", name: "Circular Spectrum", category: "Spectrum", track: "visual",
+  params: [P("spokes", "Spokes", 16, 96, 48, 1)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g, n = g.p.spokes | 0, R = Math.min(w, h) * 0.22;
+    ctx.save();
+    ctx.lineCap = "round";
+    for (let i = 0; i < n; i++) {
+      const u = i / n, a = u * TAU + g.t * 0.3;
+      const v = u < 0.33 ? g.a.bass : u < 0.66 ? g.a.mid : g.a.high;
+      const len = R * 0.3 + Math.pow(v, 1.3) * R * (0.8 + g.h01(i) * 0.5);
+      ctx.strokeStyle = g.c(i % 4, 0.85, v * 25);
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = g.glowPx * 0.5;
+      ctx.shadowColor = g.c(i % 4, 0.7);
+      ctx.beginPath();
+      ctx.moveTo(w / 2 + Math.cos(a) * R, h / 2 + Math.sin(a) * R);
+      ctx.lineTo(w / 2 + Math.cos(a) * (R + len), h / 2 + Math.sin(a) * (R + len));
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  },
+});
+
+// ============================== ADJUSTMENT (FX / COLOUR) ==============================
+
+def({
+  id: "fx.palette", name: "Palette", category: "Colour", track: "adjust",
+  params: [{ key: "palette", label: "Palette", select: ["cyberpunk","synthwave","hardstyle","techno","psytrance","trance","dnb","acid","neon","blacklight"], def: "cyberpunk" }],
+  defaultMods: [],
+  draw() { /* state-only: engine reads params.palette */ },
+});
+
+def({
+  id: "fx.strobe", name: "Strobe", category: "FX", track: "adjust",
+  params: [P("amount", "Amount", 0, 1, 0.7)],
+  defaultMods: [],
+  draw(g) {
+    const env = g.a.kick;
+    if (env < 0.03) return;
+    const { ctx, w, h } = g;
+    ctx.fillStyle = g.cStrobe(env * g.p.amount * 0.5 * g.p.intensity);
+    ctx.fillRect(0, 0, w, h);
+  },
+});
+
+def({
+  id: "fx.scanlines", name: "Scanlines", category: "FX", track: "adjust",
+  params: [P("gap", "Gap", 2, 12, 4, 1)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g, gap = g.p.gap | 0;
+    ctx.fillStyle = `rgba(0,0,0,${0.28 * g.p.intensity})`;
+    for (let y = ((g.t * 30) | 0) % gap; y < h; y += gap) ctx.fillRect(0, y, w, 1);
+  },
+});
+
+def({
+  id: "fx.vignette", name: "Vignette + Grain", category: "FX", track: "adjust",
+  params: [P("dark", "Darkness", 0, 1, 0.55)],
+  defaultMods: [],
+  draw(g) {
+    const { ctx, w, h } = g;
+    const grad = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) * 0.6);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(1, `rgba(0,0,0,${g.p.dark * g.p.intensity})`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    // sparse deterministic grain
+    const fseed = (g.t * 24) | 0;
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    for (let i = 0; i < 120; i++) {
+      ctx.fillRect(hash01(fseed, i) * w, hash01(fseed, i + 999) * h, 1.5, 1.5);
+    }
+  },
+});
+
+def({
+  id: "fx.rgbsplit", name: "RGB Split", category: "FX", track: "adjust",
+  params: [P("shift", "Shift px", 0, 30, 8, 1)],
+  defaultMods: [makeSlot("shift", "kick", 0.6, 0, 120)],
+  draw(g) {
+    const off = g.p.shift * g.p.intensity;
+    if (off < 0.5 || !g.snapshot) return;
+    const { ctx, w, h } = g, snap = g.snapshot();
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = 0.5;
+    ctx.filter = "hue-rotate(120deg)";
+    ctx.drawImage(snap, off, 0, w, h);
+    ctx.filter = "hue-rotate(-120deg)";
+    ctx.drawImage(snap, -off, 0, w, h);
+    ctx.filter = "none";
+    ctx.restore();
+  },
+});
+
+def({
+  id: "fx.invert", name: "Invert Flash", category: "FX", track: "adjust",
+  params: [P("amount", "Amount", 0, 1, 0.8)],
+  defaultMods: [],
+  draw(g) {
+    const env = g.a.snare * g.p.amount * g.p.intensity;
+    if (env < 0.1) return;
+    const { ctx, w, h } = g;
+    ctx.save();
+    ctx.globalCompositeOperation = "difference";
+    ctx.fillStyle = `rgba(${255 * env},${255 * env},${255 * env},1)`;
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+  },
+});
+
+// ============================== TRANSITIONS ==============================
+
+def({
+  id: "trans.flash", name: "White Flash", category: "Transitions", track: "transition",
+  params: [P("peak", "Peak", 0.2, 1, 0.85)],
+  defaultMods: [],
+  draw(g) {
+    const a = Math.sin(Math.min(1, Math.max(0, g.progress)) * Math.PI) * g.p.peak;
+    if (a < 0.01) return;
+    const { ctx, w, h } = g;
+    ctx.fillStyle = g.cStrobe(a);
+    ctx.fillRect(0, 0, w, h);
+  },
+});
+
+def({
+  id: "trans.glitch", name: "Glitch Cut", category: "Transitions", track: "transition",
+  params: [P("slices", "Slices", 3, 20, 9, 1)],
+  defaultMods: [],
+  draw(g) {
+    if (!g.snapshot) return;
+    const { ctx, w, h } = g, snap = g.snapshot();
+    const step = ((g.T * 24) | 0), n = g.p.slices | 0;
+    const amt = Math.sin(Math.min(1, Math.max(0, g.progress)) * Math.PI);
+    ctx.save();
+    for (let i = 0; i < n; i++) {
+      const y = (i / n) * h, sh = h / n;
+      const dx = (hash01(step, i) - 0.5) * w * 0.25 * amt;
+      ctx.drawImage(snap, 0, y, w, sh, dx, y, w, sh);
+    }
+    ctx.restore();
+  },
+});
+
+// ============================== CAMERA ==============================
+// Camera generators return a transform; engine applies it under everything.
+
+def({
+  id: "cam.bassZoom", name: "Bass Zoom", category: "Camera", track: "camera",
+  params: [P("amount", "Amount", 0, 1, 0.5)],
+  defaultMods: [],
+  cam(g) { return { zoom: 1 + g.a.bass * 0.12 * g.p.amount * 2, rot: 0, dx: 0, dy: 0 }; },
+});
+def({
+  id: "cam.shake", name: "Kick Shake", category: "Camera", track: "camera",
+  params: [P("amount", "Amount", 0, 1, 0.6)],
+  defaultMods: [],
+  cam(g) {
+    const e = g.a.kick * g.p.amount, f = (g.T * 60) | 0;
+    return { zoom: 1, rot: 0, dx: (hash01(f, 1) - 0.5) * 26 * e, dy: (hash01(f, 2) - 0.5) * 26 * e };
+  },
+});
+def({
+  id: "cam.orbit", name: "Slow Orbit", category: "Camera", track: "camera",
+  params: [P("deg", "Degrees", 0, 20, 6, 0.5)],
+  defaultMods: [],
+  cam(g) { return { zoom: 1.06, rot: Math.sin(g.t * 0.25) * g.p.deg * Math.PI / 180, dx: 0, dy: 0 }; },
+});
+def({
+  id: "cam.push", name: "Push In", category: "Camera", track: "camera",
+  params: [P("amount", "Amount", 0, 1, 0.4)],
+  defaultMods: [],
+  cam(g) { return { zoom: 1 + g.progress * g.p.amount * 0.5, rot: 0, dx: 0, dy: 0 }; },
+});
+def({
+  id: "cam.drift", name: "Handheld Drift", category: "Camera", track: "camera",
+  params: [P("amount", "Amount", 0, 1, 0.5)],
+  defaultMods: [],
+  cam(g) {
+    const a = g.p.amount;
+    return {
+      zoom: 1.03, rot: Math.sin(g.t * 0.4) * 0.01 * a,
+      dx: Math.sin(g.t * 0.31) * 14 * a, dy: Math.cos(g.t * 0.23) * 10 * a,
+    };
+  },
+});
+
+const CATEGORIES = [...new Set([...REGISTRY.values()].map(g => g.category))];
+const byCategory = cat => [...REGISTRY.values()].filter(g => g.category === cat);
+
+// ===== js/core/engine.js =====
+// Render engine (spec §3, §14). render(project, analysis, t, ctx, w, h)
+// is a pure function — the SAME code path draws preview frames and export
+// frames; only resolution differs. No retained canvas state between frames.
+
+
+const UNIVERSAL = [
+  { key: "intensity", label: "Intensity", min: 0, max: 1, def: 0.8, step: 0.01 },
+  { key: "opacity", label: "Opacity", min: 0, max: 1, def: 1, step: 0.01 },
+  { key: "speed", label: "Speed", min: 0.1, max: 3, def: 1, step: 0.05 },
+  { key: "scale", label: "Scale", min: 0.25, max: 4, def: 1, step: 0.01 },
+  { key: "hueShift", label: "Hue shift", min: -180, max: 180, def: 0, step: 1 },
+  { key: "glow", label: "Glow", min: 0, max: 1, def: 0.6, step: 0.01 },
+  { key: "pulse", label: "Pulse str.", min: 0, max: 2, def: 1, step: 0.01 },
+];
+const BLENDS = ["add", "normal", "screen", "multiply"];
+const BLEND_OP = { add: "lighter", normal: "source-over", screen: "screen", multiply: "multiply" };
+
+function paramDef(gen, key) {
+  return UNIVERSAL.find(p => p.key === key) || gen.params.find(p => p.key === key) || null;
+}
+function numericParams(gen) {
+  return [...UNIVERSAL, ...gen.params.filter(p => p.select === undefined)];
+}
+
+// Resolve one parameter value with modulation applied.
+function resolve(clip, gen, analysis, t, key) {
+  const d = paramDef(gen, key);
+  if (!d) return clip.params[key];
+  if (d.select !== undefined) return clip.params[key] ?? d.def;
+  const base = clip.params[key] ?? d.def;
+  return applyMods(clip, analysis, t, key, base, d.min, d.max);
+}
+
+function makeEngine() {
+  let snapCanvas = null, snapCtx = null;
+
+  function snapshotOf(ctx, w, h) {
+    if (!snapCanvas || snapCanvas.width !== w || snapCanvas.height !== h) {
+      snapCanvas = (typeof OffscreenCanvas !== "undefined") ? new OffscreenCanvas(w, h)
+        : Object.assign(document.createElement("canvas"), { width: w, height: h });
+      snapCtx = snapCanvas.getContext("2d");
+    }
+    snapCtx.clearRect(0, 0, w, h);
+    snapCtx.drawImage(ctx.canvas, 0, 0, w, h);
+    return snapCanvas;
+  }
+
+  function makeG(clip, gen, analysis, t, ctx, w, h, palette, audio) {
+    const speed = resolve(clip, gen, analysis, t, "speed");
+    const local = (t - clip.start) * speed;
+    const pal = PALETTES[palette] || PALETTES.cyberpunk;
+    const hueShift = resolve(clip, gen, analysis, t, "hueShift") + (clip.params.palIdx ?? 0) * 0;
+    const p = { palIdx: clip.params.palIdx ?? 0 };
+    for (const d of [...UNIVERSAL, ...gen.params]) {
+      p[d.key] = d.select !== undefined ? (clip.params[d.key] ?? d.def) : resolve(clip, gen, analysis, t, d.key);
+    }
+    const drift = t * 4;   // slow global hue drift (kept from V1's colour engine)
+    return {
+      ctx, w, h, t: local, T: t, p,
+      a: audio, seed: clip.seed, clip,
+      bpm: analysis ? analysis.bpm : 120,
+      events: analysis ? analysis.events : { kick: [], snare: [], hat: [], drop: [] },
+      beats: analysis ? analysis.beats : [],
+      progress: (t - clip.start) / Math.max(0.001, clip.end - clip.start),
+      glowPx: 10 + p.glow * 22,
+      h01: i => hash01(clip.seed, i),
+      c: (i, alpha = 1, boost = 0) =>
+        hsl(pal.colors[(i + (clip.params.palIdx ?? 0)) % pal.colors.length], alpha, boost, hueShift + drift),
+      cStrobe: alpha => hsl(pal.strobe, alpha, 0, 0),
+      snapshot: () => snapshotOf(ctx, w, h),
+    };
+  }
+
+  function clipAlpha(clip, gen, analysis, t) {
+    let a = resolve(clip, gen, analysis, t, "opacity");
+    if (clip.fadeIn > 0) a *= Math.min(1, (t - clip.start) / clip.fadeIn);
+    if (clip.fadeOut > 0) a *= Math.min(1, (clip.end - t) / clip.fadeOut);
+    return Math.max(0, Math.min(1, a));
+  }
+
+  return {
+    render(project, analysis, t, ctx, w, h) {
+      const layers = clipsAt(project, t);
+
+      // active palette: project default, overridden by an fx.palette clip
+      let palette = project.palette;
+      for (const c of layers.adjust) {
+        if (c.gen === "fx.palette") palette = c.params.palette || palette;
+      }
+      const pal = PALETTES[palette] || PALETTES.cyberpunk;
+
+      // shared audio source values for this frame
+      const audio = analysis ? {
+        kick: sourceValue(analysis, "kick", t, 0, 140),
+        snare: sourceValue(analysis, "snare", t, 0, 160),
+        hat: sourceValue(analysis, "hat", t, 0, 80),
+        bass: sourceValue(analysis, "bass", t),
+        mid: sourceValue(analysis, "mid", t),
+        high: sourceValue(analysis, "high", t),
+        energy: sourceValue(analysis, "energy", t),
+        loudness: sourceValue(analysis, "loudness", t),
+      } : { kick: 0, snare: 0, hat: 0, bass: .4, mid: .3, high: .3, energy: .5, loudness: .4 };
+
+      // background
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = hsl(pal.bg, 1);
+      ctx.fillRect(0, 0, w, h);
+
+      // camera transform (topmost active camera clip wins; §9.1)
+      ctx.save();
+      const camClip = layers.camera[layers.camera.length - 1];
+      if (camClip) {
+        const gen = REGISTRY.get(camClip.gen);
+        if (gen && gen.cam) {
+          const g = makeG(camClip, gen, analysis, t, ctx, w, h, palette, audio);
+          const cam = gen.cam(g);
+          const a = clipAlpha(camClip, gen, analysis, t);   // fade camera influence
+          const zoom = 1 + (cam.zoom - 1) * a;
+          ctx.translate(w / 2 + cam.dx * a, h / 2 + cam.dy * a);
+          ctx.rotate(cam.rot * a);
+          ctx.scale(zoom, zoom);
+          ctx.translate(-w / 2, -h / 2);
+        }
+      }
+
+      // visual clips bottom-to-top
+      for (const clip of layers.visual) {
+        const gen = REGISTRY.get(clip.gen);
+        if (!gen || !gen.draw) continue;
+        const alpha = clipAlpha(clip, gen, analysis, t);
+        if (alpha <= 0.001) continue;
+        const g = makeG(clip, gen, analysis, t, ctx, w, h, palette, audio);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.globalCompositeOperation = BLEND_OP[clip.params.blend || "add"] || "lighter";
+        const sc = g.p.scale;
+        if (sc !== 1) { ctx.translate(w / 2, h / 2); ctx.scale(sc, sc); ctx.translate(-w / 2, -h / 2); }
+        gen.draw(g);
+        ctx.restore();
+      }
+
+      ctx.restore();   // end camera
+
+      // adjustment clips (over everything below camera transform)
+      for (const clip of layers.adjust) {
+        const gen = REGISTRY.get(clip.gen);
+        if (!gen || !gen.draw || clip.gen === "fx.palette") continue;
+        const alpha = clipAlpha(clip, gen, analysis, t);
+        if (alpha <= 0.001) continue;
+        const g = makeG(clip, gen, analysis, t, ctx, w, h, palette, audio);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        gen.draw(g);
+        ctx.restore();
+      }
+
+      // transitions last
+      for (const clip of layers.transition) {
+        const gen = REGISTRY.get(clip.gen);
+        if (!gen || !gen.draw) continue;
+        const g = makeG(clip, gen, analysis, t, ctx, w, h, palette, audio);
+        ctx.save();
+        gen.draw(g);
+        ctx.restore();
+      }
+
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+      return { palette, audio };
+    },
+  };
+}
+
+// ===== js/core/director.js =====
+// Show Director (spec §9.8). Writes ordinary, editable clips into the
+// project's tracks from the analysis. Clips are tagged auto:true; the
+// contract: regenerate replaces ONLY still-tagged clips, never user edits.
+
+
+// pools: section type -> weighted choices per role
+const POOLS = {
+  background: {
+    intro: ["bg.nebula", "bg.gradient", "part.starfield"],
+    build: ["bg.grid", "bg.gradient", "bg.matrix"],
+    drop: ["bg.grid", "bg.gradient", "bg.sun"],
+    breakdown: ["bg.nebula", "part.starfield", "bg.gradient"],
+    groove: ["bg.gradient", "bg.grid", "bg.nebula", "bg.sun"],
+    chorus: ["bg.sun", "bg.gradient"],
+    outro: ["bg.nebula", "part.starfield"],
+  },
+  main: {
+    intro: ["tunnel.rings", "geo.mandala", "spec.circle"],
+    build: ["tunnel.hex", "laser.circle", "tunnel.warp", "geo.poly"],
+    drop: ["laser.fan", "laser.burst", "tunnel.grid", "laser.cross", "tunnel.star", "laser.stadium"],
+    breakdown: ["geo.mandala", "part.embers", "spec.circle", "tunnel.warp"],
+    groove: ["tunnel.hex", "laser.circle", "geo.terrain", "tunnel.rings", "laser.matrix"],
+    chorus: ["laser.stadium", "geo.terrain", "laser.fan"],
+    outro: ["part.starfield", "tunnel.rings"],
+  },
+  accents: {
+    drop: ["part.shockwave", "part.sparks", "spec.bars"],
+    chorus: ["part.confetti", "part.sparks"],
+    build: ["part.sparks"],
+  },
+  camera: {
+    intro: "cam.drift", build: "cam.push", drop: "cam.shake",
+    breakdown: "cam.orbit", groove: "cam.bassZoom", chorus: "cam.bassZoom", outro: "cam.drift",
+  },
+  intensity: { intro: 0.4, build: 0.7, drop: 1.0, breakdown: 0.45, groove: 0.7, chorus: 0.85, outro: 0.35 },
+};
+
+function generateShow(project, analysis) {
+  const tracks = Object.fromEntries(project.tracks.map(tr => [tr.name, tr]));
+  const bg = tracks["Background"], main = tracks["Main"], acc = tracks["Accents"];
+  const fx = tracks["FX / Colour"], cam = tracks["Camera"], trans = tracks["Transitions"];
+
+  // clear only director-owned clips (the §9.8 contract)
+  for (const tr of project.tracks) tr.clips = tr.clips.filter(c => !c.auto);
+
+  const pick = (pool, rnd) => pool[Math.floor(rnd() * pool.length) % pool.length];
+
+  analysis.sections.forEach((sec, i) => {
+    const rnd = prng(project.seed * 7919 + i * 131);
+    const type = POOLS.main[sec.type] ? sec.type : "groove";
+    const intensity = POOLS.intensity[type];
+    const opts = { auto: true, seed: project.seed * 100 + i };
+
+    if (bg) bg.clips.push(makeClip(pick(POOLS.background[type], rnd), sec.start, sec.end,
+      { intensity: intensity * 0.8 }, { ...opts, fadeIn: 0.4, fadeOut: 0.4 }));
+
+    if (main) main.clips.push(makeClip(pick(POOLS.main[type], rnd), sec.start, sec.end,
+      { intensity }, { ...opts, fadeIn: 0.25, fadeOut: 0.25 }));
+
+    if (acc && POOLS.accents[type]) {
+      acc.clips.push(makeClip(pick(POOLS.accents[type], rnd), sec.start, sec.end,
+        { intensity: intensity * 0.9 }, opts));
+    }
+
+    if (cam) cam.clips.push(makeClip(POOLS.camera[type], sec.start, sec.end, {}, opts));
+
+    if (fx) {
+      // palette per section (kept from V1 Auto Show)
+      const pals = AUTO_PALETTES[type] || AUTO_PALETTES.groove;
+      const palette = pals[i % pals.length];
+      fx.clips.push(makeClip("fx.palette", sec.start, sec.end, { palette }, opts));
+      if (type === "drop") {
+        fx.clips.push(makeClip("fx.strobe", sec.start, sec.end, { amount: 0.65 }, opts));
+        fx.clips.push(makeClip("fx.rgbsplit", sec.start, sec.end, { shift: 5, intensity: 0.6 }, opts));
+      }
+      if (type === "build") {
+        const buildFx = makeClip("fx.rgbsplit", sec.start, sec.end, { shift: 2 }, opts);
+        buildFx.mods = [{ param: "shift", source: "buildProgress", amount: 0.5, attackMs: 0, releaseMs: 100, bypass: false }];
+        fx.clips.push(buildFx);
+      }
+    }
+
+    // transition flash at every section start except t=0 (kept from V1)
+    if (trans && sec.start > 0.01) {
+      trans.clips.push(makeClip(sec.type === "drop" ? "trans.flash" : "trans.flash",
+        sec.start - 0.15, sec.start + 0.45, { peak: sec.type === "drop" ? 1 : 0.7 }, opts));
+    }
+  });
+
+  for (const tr of project.tracks) sortTrack(tr);
+}
+
+// ===== js/core/playback.js =====
+// Shared playback clock (desktop + mobile shells). Plays the source
+// AudioBuffer; its `t` is the time every render reads.
+
+class Playback {
+  constructor() {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.gain = this.ctx.createGain();
+    this.gain.connect(this.ctx.destination);
+    this.streamDest = this.ctx.createMediaStreamDestination();
+    this.gain.connect(this.streamDest);
+    this.buffer = null; this.source = null;
+    this.playing = false; this.startedAt = 0; this.offset = 0;
+    this.onEnded = null;
+  }
+  get duration() { return this.buffer ? this.buffer.duration : 0; }
+  get t() {
+    if (!this.buffer) return 0;
+    return this.playing ? Math.min(this.offset + this.ctx.currentTime - this.startedAt, this.duration) : this.offset;
+  }
+  play() {
+    if (!this.buffer || this.playing) return;
+    this.ctx.resume();
+    this.source = this.ctx.createBufferSource();
+    this.source.buffer = this.buffer;
+    this.source.connect(this.gain);
+    this.source.onended = () => {
+      if (this.playing && this.t >= this.duration - 0.05) {
+        this.playing = false; this.offset = 0;
+        if (this.onEnded) this.onEnded();
+      }
+    };
+    this.source.start(0, this.offset);
+    this.startedAt = this.ctx.currentTime;
+    this.playing = true;
+  }
+  pause() { if (!this.playing) return; this.offset = this.t; this._kill(); this.playing = false; }
+  seek(t) {
+    const was = this.playing;
+    if (was) this._kill();
+    this.playing = false;
+    this.offset = Math.max(0, Math.min(t, this.duration));
+    if (was) this.play();
+  }
+  _kill() {
+    if (this.source) {
+      this.source.onended = null;
+      try { this.source.stop(); } catch (e) { /* noop */ }
+      this.source.disconnect(); this.source = null;
+    }
+  }
+}
+
+// ===== js/export/mp4muxer.js =====
+// Minimal ISO-BMFF (MP4) muxer for WebCodecs output (spec §13).
+// Supports: one H.264 (avc1) video track + optional AAC (mp4a) or Opus
+// audio track. Layout: ftyp | mdat (video samples, then audio samples) |
+// moov. One chunk per track keeps the sample tables trivial and valid.
+
+// ---- byte writer ----
+class W {
+  constructor() { this.parts = []; this.len = 0; }
+  bytes(b) { this.parts.push(b); this.len += b.length; return this; }
+  u8(v) { return this.bytes(new Uint8Array([v & 0xff])); }
+  u16(v) { return this.bytes(new Uint8Array([(v >> 8) & 0xff, v & 0xff])); }
+  u24(v) { return this.bytes(new Uint8Array([(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff])); }
+  u32(v) { return this.bytes(new Uint8Array([(v >>> 24) & 0xff, (v >>> 16) & 0xff, (v >>> 8) & 0xff, v & 0xff])); }
+  u64(v) { this.u32(Math.floor(v / 4294967296)); return this.u32(v >>> 0); }
+  str(s) { return this.bytes(new TextEncoder().encode(s)); }
+  out() {
+    const buf = new Uint8Array(this.len);
+    let o = 0;
+    for (const p of this.parts) { buf.set(p, o); o += p.length; }
+    return buf;
+  }
+}
+
+function box(type, ...children) {
+  const w = new W();
+  for (const c of children) w.bytes(c instanceof Uint8Array ? c : c.out());
+  const body = w.out();
+  const full = new W();
+  full.u32(8 + body.length).str(type).bytes(body);
+  return full.out();
+}
+const fullBox = (type, version, flags, body) => {
+  const w = new W();
+  w.u8(version).u24(flags).bytes(body.out());
+  return box(type, w.out());
+};
+
+// build stts (decode deltas) from per-sample durations in timescale units
+function stts(durations) {
+  const runs = [];
+  for (const d of durations) {
+    if (runs.length && runs[runs.length - 1].d === d) runs[runs.length - 1].n++;
+    else runs.push({ d, n: 1 });
+  }
+  const b = new W();
+  b.u32(runs.length);
+  for (const r of runs) b.u32(r.n).u32(r.d);
+  return fullBox("stts", 0, 0, b);
+}
+
+function stsz(sizes) {
+  const b = new W();
+  b.u32(0).u32(sizes.length);
+  for (const s of sizes) b.u32(s);
+  return fullBox("stsz", 0, 0, b);
+}
+
+function stblCommon(sampleEntry, durations, sizes, chunkOffset, keyframes) {
+  const stsc = (() => { const b = new W(); b.u32(1).u32(1).u32(sizes.length).u32(1); return fullBox("stsc", 0, 0, b); })();
+  const stco = (() => { const b = new W(); b.u32(1).u32(chunkOffset); return fullBox("stco", 0, 0, b); })();
+  const stsd = (() => { const b = new W(); b.u32(1); b.bytes(sampleEntry); return fullBox("stsd", 0, 0, b); })();
+  const children = [stsd, stts(durations), stsc, stsz(sizes), stco];
+  if (keyframes && keyframes.length && keyframes.length < sizes.length) {
+    const b = new W();
+    b.u32(keyframes.length);
+    for (const k of keyframes) b.u32(k + 1);   // 1-indexed
+    children.push(fullBox("stss", 0, 0, b));
+  }
+  return box("stbl", ...children);
+}
+
+function tkhd(id, durationMvhd, w, h, isAudio) {
+  const b = new W();
+  b.u32(0).u32(0).u32(id).u32(0).u32(durationMvhd);
+  b.u32(0).u32(0).u16(0).u16(0);
+  b.u16(isAudio ? 0x0100 : 0).u16(0);
+  // identity matrix
+  b.u32(0x00010000).u32(0).u32(0).u32(0).u32(0x00010000).u32(0).u32(0).u32(0).u32(0x40000000);
+  b.u32((w || 0) << 16).u32((h || 0) << 16);
+  return fullBox("tkhd", 0, 3, b);
+}
+
+function mdhd(timescale, duration) {
+  const b = new W();
+  b.u32(0).u32(0).u32(timescale).u32(duration).u16(0x55c4).u16(0);
+  return fullBox("mdhd", 0, 0, b);
+}
+
+function hdlr(type, name) {
+  const b = new W();
+  b.u32(0).str(type).u32(0).u32(0).u32(0).str(name).u8(0);
+  return fullBox("hdlr", 0, 0, b);
+}
+
+const dinf = () => box("dinf", fullBox("dref", 0, 0, (() => {
+  const b = new W();
+  b.u32(1);
+  b.bytes(fullBox("url ", 0, 1, new W()));
+  return b;
+})()));
+
+function visualSampleEntryHeader(w, h) {
+  const b = new W();
+  b.bytes(new Uint8Array(6)).u16(1);                    // reserved + data_ref
+  b.u16(0).u16(0).u32(0).u32(0).u32(0);                 // pre_defined/reserved
+  b.u16(w).u16(h).u32(0x00480000).u32(0x00480000);      // 72 dpi
+  b.u32(0).u16(1);                                      // frame_count
+  b.bytes(new Uint8Array(32));                          // compressorname
+  b.u16(0x0018).u16(0xffff);                            // depth, pre_defined
+  return b.out();
+}
+
+function avc1Entry(w, h, avcC) {
+  const entry = new W();
+  entry.bytes(visualSampleEntryHeader(w, h)).bytes(box("avcC", new Uint8Array(avcC)));
+  return box("avc1", entry.out());
+}
+
+function vp09Entry(w, h) {
+  // vpcC: version 1, profile 0, level 41, 8-bit 4:2:0, BT.709
+  const v = new W();
+  v.u8(0).u8(41).u8((8 << 4) | (1 << 1) | 0);           // profile, level, depth|subsampling|fullrange
+  v.u8(1).u8(1).u8(1);                                  // primaries, transfer, matrix
+  v.u16(0);                                             // codecInitializationDataSize
+  const entry = new W();
+  entry.bytes(visualSampleEntryHeader(w, h)).bytes(fullBox("vpcC", 1, 0, v));
+  return box("vp09", entry.out());
+}
+
+function esdsDescriptor(asc, avgBitrate) {
+  const d = new W();
+  d.u8(0x03).u8(23 + asc.length);                       // ES_Descriptor
+  d.u16(1).u8(0);
+  d.u8(0x04).u8(15 + asc.length);                       // DecoderConfig
+  d.u8(0x40).u8(0x15).u24(0).u32(avgBitrate).u32(avgBitrate);
+  d.u8(0x05).u8(asc.length).bytes(new Uint8Array(asc)); // DecSpecificInfo
+  d.u8(0x06).u8(1).u8(0x02);                            // SLConfig
+  const b = new W();
+  b.u32(0).bytes(d.out());
+  return box("esds", b.out());
+}
+
+function audioEntry(codec, channels, sampleRate, description, avgBitrate) {
+  const b = new W();
+  b.bytes(new Uint8Array(6)).u16(1);
+  b.u32(0).u32(0);
+  b.u16(channels).u16(16).u16(0).u16(0);
+  b.u32(sampleRate << 16);
+  const entry = new W();
+  entry.bytes(b.out());
+  if (codec === "aac") {
+    entry.bytes(esdsDescriptor(description || [0x12, 0x10], avgBitrate));
+    return box("mp4a", entry.out());
+  }
+  // Opus: dOps box (values big-endian, from OpusHead if provided)
+  let preSkip = 3840, gain = 0;
+  if (description && description.length >= 19) {         // OpusHead layout (LE)
+    const d = new Uint8Array(description);
+    preSkip = d[10] | (d[11] << 8);
+    gain = d[16] | (d[17] << 8);
+  }
+  const dops = new W();
+  dops.u8(0).u8(channels).u16(preSkip).u32(sampleRate).u16(gain).u8(0);
+  entry.bytes(box("dOps", dops.out()));
+  return box("Opus", entry.out());
+}
+
+// samples: [{ data: Uint8Array, duration (timescale units), key: bool }]
+function muxMP4({ video, audio }) {
+  const videoBytes = video.samples.reduce((s, x) => s + x.data.length, 0);
+  const audioBytes = audio ? audio.samples.reduce((s, x) => s + x.data.length, 0) : 0;
+
+  const ftyp = (() => {
+    const b = new W();
+    b.str("isom").u32(512).str("isom").str("iso2").str("avc1").str("mp41");
+    return box("ftyp", b.out());
+  })();
+
+  const mdatHeader = 8;
+  const mdatStart = ftyp.length;
+  const videoOffset = mdatStart + mdatHeader;
+  const audioOffset = videoOffset + videoBytes;
+
+  const mdat = new W();
+  mdat.u32(mdatHeader + videoBytes + audioBytes).str("mdat");
+  for (const s of video.samples) mdat.bytes(s.data);
+  if (audio) for (const s of audio.samples) mdat.bytes(s.data);
+
+  const vDur = video.samples.reduce((s, x) => s + x.duration, 0);
+  const movieDurMs = Math.round(vDur / video.timescale * 1000);
+
+  const mvhd = (() => {
+    const b = new W();
+    b.u32(0).u32(0).u32(1000).u32(movieDurMs);
+    b.u32(0x00010000).u16(0x0100).u16(0).u32(0).u32(0);
+    b.u32(0x00010000).u32(0).u32(0).u32(0).u32(0x00010000).u32(0).u32(0).u32(0).u32(0x40000000);
+    b.bytes(new Uint8Array(24));    // pre_defined
+    b.u32(audio ? 3 : 2);           // next_track_ID
+    return fullBox("mvhd", 0, 0, b);
+  })();
+
+  const vTrak = box("trak",
+    tkhd(1, movieDurMs, video.width, video.height, false),
+    box("mdia",
+      mdhd(video.timescale, vDur),
+      hdlr("vide", "Poopdog Video"),
+      box("minf",
+        fullBox("vmhd", 0, 1, (() => { const b = new W(); b.u16(0).u16(0).u16(0).u16(0); return b; })()),
+        dinf(),
+        stblCommon(
+          video.codec === "vp9" ? vp09Entry(video.width, video.height)
+            : avc1Entry(video.width, video.height, video.avcC),
+          video.samples.map(s => s.duration),
+          video.samples.map(s => s.data.length),
+          videoOffset,
+          video.samples.map((s, i) => s.key ? i : -1).filter(i => i >= 0),
+        ))));
+
+  let aTrak = null;
+  if (audio) {
+    const aDur = audio.samples.reduce((s, x) => s + x.duration, 0);
+    aTrak = box("trak",
+      tkhd(2, movieDurMs, 0, 0, true),
+      box("mdia",
+        mdhd(audio.timescale, aDur),
+        hdlr("soun", "Poopdog Audio"),
+        box("minf",
+          fullBox("smhd", 0, 0, (() => { const b = new W(); b.u16(0).u16(0); return b; })()),
+          dinf(),
+          stblCommon(
+            audioEntry(audio.codec, audio.channels, audio.sampleRate, audio.description, audio.avgBitrate || 128000),
+            audio.samples.map(s => s.duration),
+            audio.samples.map(s => s.data.length),
+            audioOffset,
+            null,
+          ))));
+  }
+
+  const moov = aTrak ? box("moov", mvhd, vTrak, aTrak) : box("moov", mvhd, vTrak);
+
+  const out = new W();
+  out.bytes(ftyp).bytes(mdat.out()).bytes(moov);
+  return new Blob([out.out()], { type: "video/mp4" });
+}
+
+// ===== js/export/exporter.js =====
+// Offline deterministic exporter (spec §13.4). Fixed-timestep re-render of
+// the project through the same engine as preview — never a capture of
+// playback. Video: WebCodecs H.264 -> minimal MP4 muxer. Audio: AAC when
+// the platform encoder exists, else Opus-in-MP4.
+
+
+function avcCodecString(w, h, fps) {
+  // main profile; level by pixel rate
+  const mbs = Math.ceil(w / 16) * Math.ceil(h / 16) * fps;
+  if (mbs > 245760 || w >= 3000) return "avc1.640033";   // high 5.1 (4K)
+  if (mbs > 108000) return "avc1.4d0029";                // main 4.1
+  return "avc1.4d001f";                                  // main 3.1
+}
+
+async function exportMP4({ engine, project, analysis, audioBuffer, width, height, fps, quality, durationS, onProgress, shouldCancel }) {
+  if (typeof VideoEncoder === "undefined") {
+    throw new Error("WebCodecs is not available — use the WebM fallback format.");
+  }
+  const totalFrames = Math.ceil(durationS * fps);
+  const timescale = fps * 1000, frameDelta = 1000;
+
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  // ---- video encoder ----
+  const bitrate = Math.round((width * height * fps) / 30 * (0.06 + quality / 100 * 0.22));
+  const videoSamples = [];
+  let avcC = null;
+  let encodeError = null;
+  const encoder = new VideoEncoder({
+    output: (chunk, meta) => {
+      if (meta && meta.decoderConfig && meta.decoderConfig.description) {
+        avcC = new Uint8Array(meta.decoderConfig.description);
+      }
+      const data = new Uint8Array(chunk.byteLength);
+      chunk.copyTo(data);
+      videoSamples.push({ data, duration: frameDelta, key: chunk.type === "key" });
+    },
+    error: e => { encodeError = e; },
+  });
+  // H.264 first (the §13 default); VP9-in-MP4 fallback for Chromium builds
+  // without proprietary encoders. Codec is reported back to the UI.
+  let videoCodec = "avc";
+  let cfg = {
+    codec: avcCodecString(width, height, fps), width, height, framerate: fps,
+    bitrate, avc: { format: "avc" }, latencyMode: "quality",
+  };
+  let support = await VideoEncoder.isConfigSupported(cfg).catch(() => ({ supported: false }));
+  if (!support.supported) {
+    videoCodec = "vp9";
+    cfg = { codec: "vp09.00.41.08", width, height, framerate: fps, bitrate, latencyMode: "quality" };
+    support = await VideoEncoder.isConfigSupported(cfg).catch(() => ({ supported: false }));
+  }
+  if (!support.supported) throw new Error("No supported video encoder (tried H.264, VP9).");
+  encoder.configure(cfg);
+
+  // ---- render + encode loop (fixed timestep) ----
+  const t0 = performance.now();
+  for (let i = 0; i < totalFrames; i++) {
+    if (shouldCancel && shouldCancel()) { encoder.close(); throw new Error("cancelled"); }
+    if (encodeError) throw encodeError;
+    const t = i / fps;
+    engine.render(project, analysis, t, ctx, width, height);
+    const frame = new VideoFrame(canvas, { timestamp: Math.round(i * 1e6 / fps) });
+    encoder.encode(frame, { keyFrame: i % (fps * 2) === 0 });
+    frame.close();
+    if (encoder.encodeQueueSize > 6) {
+      await new Promise(r => { encoder.addEventListener("dequeue", r, { once: true }); });
+    }
+    if (onProgress && (i & 7) === 0) {
+      const elapsed = (performance.now() - t0) / 1000;
+      onProgress({ frame: i, total: totalFrames, fps: i / Math.max(0.001, elapsed), stage: "video" });
+    }
+    if ((i & 31) === 0) await new Promise(r => setTimeout(r, 0));
+  }
+  await encoder.flush();
+  encoder.close();
+  if (encodeError) throw encodeError;
+
+  // ---- audio ----
+  let audioTrack = null;
+  try {
+    audioTrack = await encodeAudio(audioBuffer, durationS, onProgress);
+  } catch (e) {
+    console.warn("Audio encode failed, exporting video-only MP4:", e);
+  }
+
+  if (onProgress) onProgress({ frame: totalFrames, total: totalFrames, fps: 0, stage: "mux" });
+  return {
+    blob: muxMP4({
+      video: { samples: videoSamples, timescale, width, height, avcC, codec: videoCodec },
+      audio: audioTrack,
+    }),
+    videoCodec,
+    audioCodec: audioTrack ? audioTrack.codec : "none",
+  };
+}
+
+async function encodeAudio(audioBuffer, durationS, onProgress) {
+  if (!audioBuffer || typeof AudioEncoder === "undefined") return null;
+
+  // resample to 48k stereo so both AAC and Opus are happy
+  const RATE = 48000, CH = 2;
+  const frames = Math.min(Math.ceil(durationS * RATE), Math.ceil(audioBuffer.duration * RATE));
+  const oac = new OfflineAudioContext(CH, frames, RATE);
+  const src = oac.createBufferSource();
+  src.buffer = audioBuffer;
+  src.connect(oac.destination);
+  src.start();
+  const resampled = await oac.startRendering();
+
+  // prefer AAC, fall back to Opus
+  let codec = "aac", codecString = "mp4a.40.2";
+  let sup = await AudioEncoder.isConfigSupported({ codec: codecString, sampleRate: RATE, numberOfChannels: CH, bitrate: 192000 })
+    .catch(() => ({ supported: false }));
+  if (!sup.supported) {
+    codec = "opus"; codecString = "opus";
+    sup = await AudioEncoder.isConfigSupported({ codec: "opus", sampleRate: RATE, numberOfChannels: CH, bitrate: 160000 })
+      .catch(() => ({ supported: false }));
+    if (!sup.supported) return null;
+  }
+
+  const samples = [];
+  let description = null, err = null;
+  const enc = new AudioEncoder({
+    output: (chunk, meta) => {
+      if (meta && meta.decoderConfig && meta.decoderConfig.description) {
+        description = new Uint8Array(meta.decoderConfig.description);
+      }
+      const data = new Uint8Array(chunk.byteLength);
+      chunk.copyTo(data);
+      // duration comes back in µs; convert to timescale (= sample rate) units
+      samples.push({ data, duration: Math.round((chunk.duration || 21333) * RATE / 1e6), key: true });
+    },
+    error: e => { err = e; },
+  });
+  enc.configure({ codec: codecString, sampleRate: RATE, numberOfChannels: CH, bitrate: codec === "aac" ? 192000 : 160000 });
+
+  const CHUNK = 4800;   // 100ms per AudioData
+  const planes = [resampled.getChannelData(0), resampled.getChannelData(1)];
+  for (let off = 0; off < frames; off += CHUNK) {
+    const n = Math.min(CHUNK, frames - off);
+    const buf = new Float32Array(n * CH);           // f32-planar: plane 0 then plane 1
+    buf.set(planes[0].subarray(off, off + n), 0);
+    buf.set(planes[1].subarray(off, off + n), n);
+    enc.encode(new AudioData({
+      format: "f32-planar", sampleRate: RATE, numberOfFrames: n,
+      numberOfChannels: CH, timestamp: Math.round(off * 1e6 / RATE), data: buf,
+    }));
+    if (err) throw err;
+  }
+  await enc.flush();
+  enc.close();
+  if (err) throw err;
+
+  return { samples, timescale: RATE, sampleRate: RATE, channels: CH, codec, description, avgBitrate: codec === "aac" ? 192000 : 160000 };
+}
+
+// Legacy fallback (V1 path): realtime capture to WebM. Kept only for
+// engines without WebCodecs; clearly labelled in the UI.
+function exportWebM({ canvas, audioEngine, onDone }) {
+  const stream = new MediaStream([
+    ...canvas.captureStream(60).getVideoTracks(),
+    ...audioEngine.streamDest.stream.getAudioTracks(),
+  ]);
+  const mime = ["video/webm;codecs=vp9,opus", "video/webm"].find(m => MediaRecorder.isTypeSupported(m)) || "";
+  const chunks = [];
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12_000_000 });
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => onDone(new Blob(chunks, { type: "video/webm" }));
+  rec.start(250);
+  return rec;
+}
+
+// ===== js/ui/home.js =====
+// Home dashboard (spec §4.2): new-from-audio, templates, recent projects.
+
+
+const TEMPLATES = [
+  { name: "Techno Warehouse", palette: "techno", seed: 3, desc: "Stark strobes, grids, monochrome" },
+  { name: "Festival Mainstage", palette: "neon", seed: 7, desc: "Big lasers, confetti, colour" },
+  { name: "Psy Forest", palette: "psytrance", seed: 11, desc: "Mandalas, spirals, organic motion" },
+  { name: "Synthwave Drive", palette: "synthwave", seed: 5, desc: "Sun, terrain, chrome grids" },
+];
+
+function initHome(app) {
+  let pendingTemplate = null;
+  let pendingRecent = null;
+
+  const openPicker = () => $("home-file").click();
+
+  $("home-drop").addEventListener("click", openPicker);
+  $("home-drop").addEventListener("dragover", e => { e.preventDefault(); $("home-drop").classList.add("over"); });
+  $("home-drop").addEventListener("dragleave", () => $("home-drop").classList.remove("over"));
+  $("home-drop").addEventListener("drop", e => {
+    e.preventDefault();
+    $("home-drop").classList.remove("over");
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith("audio")) startProject(f);
+  });
+  $("home-file").addEventListener("change", e => {
+    if (e.target.files[0]) startProject(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  async function startProject(file) {
+    let project;
+    if (pendingRecent) {
+      project = pendingRecent;
+      pendingRecent = null;
+      app.toast(`Relinked audio for “${project.name}”`);
+    } else {
+      project = makeProject(file.name.replace(/\.[^.]+$/, ""));
+      project.tracks = defaultTracks();
+      if (pendingTemplate) {
+        project.palette = pendingTemplate.palette;
+        project.seed = pendingTemplate.seed;
+        pendingTemplate = null;
+      }
+    }
+    project.audioName = file.name;
+    app.project = project;
+    app.setHistory();
+    app.emit("audioFile", file);          // analysis screen takes over
+  }
+
+  // templates
+  const tpl = $("home-templates");
+  for (const t of TEMPLATES) {
+    const el = document.createElement("div");
+    el.className = "card";
+    const sw = PALETTES[t.palette].colors
+      .map(c => `<i style="background:hsl(${c[0]},${c[1]}%,${c[2]}%)"></i>`).join("");
+    el.innerHTML = `<div class="t">${t.name}</div><div class="d">${t.desc}</div><div class="swatches">${sw}</div>`;
+    el.addEventListener("click", () => {
+      pendingTemplate = t;
+      app.toast(`Template “${t.name}” — now pick an audio file`);
+      openPicker();
+    });
+    tpl.appendChild(el);
+  }
+
+  // recent projects
+  function renderRecent() {
+    const wrap = $("home-recent");
+    wrap.innerHTML = "";
+    const list = recentProjects();
+    if (!list.length) {
+      wrap.innerHTML = `<div class="dim">Nothing yet — projects autosave here.</div>`;
+      return;
+    }
+    for (const e of list) {
+      const el = document.createElement("div");
+      el.className = "card";
+      const when = new Date(e.savedAt).toLocaleString();
+      el.innerHTML = `<div class="t">${e.name}</div><div class="d">${e.audioName || ""}<br>${when}</div>`;
+      el.addEventListener("click", () => {
+        pendingRecent = deserialize(e.project);
+        app.toast("Pick the project's audio file to relink it");
+        openPicker();
+      });
+      wrap.appendChild(el);
+    }
+  }
+  renderRecent();
+  app.on("screen", s => { if (s === "home") renderRecent(); });
+}
+
+// ===== js/ui/analysisScreen.js =====
+// Analysis screen (spec §4.4): watch the structure draw itself, then
+// correct it — drag boundaries, click a section to retype, fix BPM octave.
+
+
+function initAnalysisScreen(app) {
+  const canvas = $("an-canvas");
+  const ctx = canvas.getContext("2d");
+  let drag = null;   // { index } boundary being dragged
+
+  app.on("audioFile", async file => {
+    app.show("analysis");
+    $("an-file").textContent = file.name;
+    $("an-status").textContent = "Decoding…";
+    $("an-generate").disabled = true;
+    $("an-empty").disabled = true;
+    app.analysis = null;
+    draw();
+    try {
+      const ab = await file.arrayBuffer();
+      app.audioBuffer = await app.playback.ctx.decodeAudioData(ab);
+      app.playback.buffer = app.audioBuffer;
+      app.analysis = await analyze(app.audioBuffer, m => { $("an-status").textContent = m; draw(); });
+      $("an-status").textContent = `Analysis complete — ${app.analysis.events.kick.length} kicks, ${app.analysis.events.snare.length} snares, ${app.analysis.sections.length} sections`;
+      $("an-generate").disabled = false;
+      $("an-empty").disabled = false;
+      updateStats();
+      draw();
+    } catch (err) {
+      $("an-status").textContent = "Could not load that file: " + err.message;
+      app.toast("Import failed: " + err.message);
+    }
+  });
+
+  function updateStats() {
+    const a = app.analysis;
+    if (!a) return;
+    $("an-bpm").textContent = a.bpm;
+    $("an-dur").textContent = fmt(a.duration);
+    $("an-secs").textContent = `${a.sections.length} sections`;
+  }
+
+  const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+
+  // BPM octave fix: rescale bpm and rebuild grid at same phase
+  function rescaleBPM(factor) {
+    const a = app.analysis;
+    if (!a) return;
+    a.bpm = Math.round(a.bpm * factor * 10) / 10;
+    const t0 = a.beats.length ? a.beats[0] : 0;
+    const period = 60 / a.bpm;
+    const beats = [];
+    for (let t = t0; t < a.duration; t += period) beats.push(t);
+    a.beats = Float64Array.from(beats);
+    a.bars = Float64Array.from(beats.filter((_, i) => i % 4 === 0));
+    updateStats();
+    draw();
+  }
+  $("an-half").addEventListener("click", () => rescaleBPM(0.5));
+  $("an-double").addEventListener("click", () => rescaleBPM(2));
+
+  // ---- canvas drawing ----
+  function draw() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const a = app.analysis;
+    if (!a) {
+      ctx.fillStyle = "#15151f";
+      ctx.fillRect(0, 0, w, h);
+      return;
+    }
+    const dur = a.duration;
+    const X = t => t / dur * w;
+
+    // section blocks
+    for (const s of a.sections) {
+      ctx.fillStyle = SECTION_COLORS[s.type] || "#444";
+      ctx.globalAlpha = 0.4;
+      ctx.fillRect(X(s.start), 0, X(s.end) - X(s.start), h);
+    }
+    ctx.globalAlpha = 1;
+
+    // waveform
+    ctx.fillStyle = "rgba(255,255,255,.55)";
+    const n = a.waveform.length;
+    for (let i = 0; i < n; i++) {
+      const x = i / n * w, v = a.waveform[i] * h * 0.42;
+      ctx.fillRect(x, h / 2 - v, Math.max(1, w / n - 0.5), v * 2);
+    }
+
+    // beat grid (thin) + bars (heavier) — only when zoomed enough to matter
+    if (dur < 240) {
+      ctx.fillStyle = "rgba(255,255,255,.14)";
+      for (const b of a.beats) ctx.fillRect(X(b), h - 14, 1, 14);
+      ctx.fillStyle = "rgba(255,255,255,.4)";
+      for (const b of a.bars) ctx.fillRect(X(b), h - 22, 1, 22);
+    }
+
+    // energy curve
+    ctx.strokeStyle = "rgba(200,255,0,.8)";
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath();
+    const E = a.curves.energy;
+    for (let x = 0; x < w; x += 2) {
+      const idx = Math.min(E.length - 1, Math.floor(x / w * E.length));
+      const y = h - E[idx] * h * 0.9 - 3;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // boundaries + labels
+    ctx.font = `${11 * dpr}px system-ui`;
+    for (let i = 0; i < a.sections.length; i++) {
+      const s = a.sections[i];
+      ctx.fillStyle = "#fff";
+      if (i > 0) ctx.fillRect(X(s.start) - 1, 0, 2, h);
+      const bw = X(s.end) - X(s.start);
+      if (bw > 40 * dpr) {
+        ctx.fillStyle = "rgba(255,255,255,.9)";
+        ctx.fillText(SECTION_LABELS[s.type] || s.type, X(s.start) + 5 * dpr, 14 * dpr);
+      }
+    }
+  }
+  window.addEventListener("resize", draw);
+  app.on("screen", s => { if (s === "analysis") setTimeout(draw, 30); });
+
+  // ---- interactions ----
+  const posToTime = e => {
+    const r = canvas.getBoundingClientRect();
+    return (e.clientX - r.left) / r.width * (app.analysis ? app.analysis.duration : 1);
+  };
+  const nearBoundary = e => {
+    const a = app.analysis;
+    if (!a) return -1;
+    const r = canvas.getBoundingClientRect();
+    for (let i = 1; i < a.sections.length; i++) {
+      const bx = a.sections[i].start / a.duration * r.width + r.left;
+      if (Math.abs(e.clientX - bx) < 6) return i;
+    }
+    return -1;
+  };
+
+  canvas.addEventListener("pointermove", e => {
+    if (drag) {
+      const a = app.analysis;
+      let t = posToTime(e);
+      // snap to nearest beat
+      let best = t, bd = 0.35;
+      for (const b of a.beats) { const d = Math.abs(b - t); if (d < bd) { bd = d; best = b; } }
+      t = best;
+      const i = drag.index;
+      const min = a.sections[i - 1].start + 1, max = a.sections[i].end - 1;
+      t = Math.max(min, Math.min(max, t));
+      a.sections[i - 1].end = t;
+      a.sections[i].start = t;
+      draw();
+    } else {
+      canvas.style.cursor = nearBoundary(e) >= 0 ? "col-resize" : "crosshair";
+    }
+  });
+  canvas.addEventListener("pointerdown", e => {
+    const b = nearBoundary(e);
+    if (b >= 0) { drag = { index: b }; canvas.setPointerCapture(e.pointerId); }
+  });
+  canvas.addEventListener("pointerup", e => {
+    if (drag) { drag = null; updateStats(); return; }
+    // click: cycle the section's type
+    const a = app.analysis;
+    if (!a) return;
+    const t = posToTime(e);
+    const s = a.sections.find(x => t >= x.start && t < x.end);
+    if (s) {
+      s.type = SECTION_TYPES[(SECTION_TYPES.indexOf(s.type) + 1) % SECTION_TYPES.length];
+      a.events.drop = a.sections.filter(x => x.type === "drop").map(x => ({ t: x.start, strength: 1 }));
+      draw();
+    }
+  });
+
+  // ---- exits ----
+  $("an-generate").addEventListener("click", () => {
+    generateShow(app.project, app.analysis);
+    app.commit();
+    app.show("editor");
+    app.emit("openEditor");
+  });
+  $("an-empty").addEventListener("click", () => {
+    app.commit();
+    app.show("editor");
+    app.emit("openEditor");
+  });
+}
+
+// ===== js/ui/editor.js =====
+// Editor screen (spec §4.5): preview loop, transport, asset browser,
+// generate button, keyboard shortcuts. Timeline + inspector live in their
+// own modules.
+
+const undoOp = undo;
+const redoOp = redo;
+
+const CAT_COLORS = {
+  Lasers: "#ff2d95", Tunnels: "#00d0ff", Geometry: "#c8ff00", Particles: "#ffb400",
+  Backgrounds: "#7a4fd0", Spectrum: "#00ffa8", Colour: "#ff7ad0", FX: "#ff5540",
+  Transitions: "#ffffff", Camera: "#9aa7ff",
+};
+
+function initEditor(app) {
+  const preview = $("ed-preview");
+  const pvCtx = preview.getContext("2d");
+  let quality = 1;             // 1 full, 0.5 half, 0.25 quarter
+  let autoQuality = true;
+  let fpsSamples = [];
+
+  initTimeline(app);
+  initInspector(app);
+
+  // ---- asset browser ----
+  function renderAssets(filter = "") {
+    const list = $("as-list");
+    list.innerHTML = "";
+    const f = filter.trim().toLowerCase();
+    for (const cat of CATEGORIES) {
+      const items = byCategory(cat).filter(g => !f || g.name.toLowerCase().includes(f) || cat.toLowerCase().includes(f));
+      if (!items.length) continue;
+      const head = document.createElement("div");
+      head.className = "as-cat";
+      head.textContent = cat;
+      list.appendChild(head);
+      for (const gen of items) {
+        const el = document.createElement("div");
+        el.className = "as-item";
+        el.draggable = true;
+        el.innerHTML = `<span class="sw" style="background:${CAT_COLORS[cat] || "#666"}"></span>${gen.name}`;
+        el.title = "Drag to timeline, or double-click to add at playhead";
+        el.addEventListener("dragstart", e => e.dataTransfer.setData("text/poopdog-gen", gen.id));
+        el.addEventListener("dblclick", () => addAtPlayhead(gen.id));
+        list.appendChild(el);
+      }
+    }
+  }
+  $("as-search").addEventListener("input", e => renderAssets(e.target.value));
+  renderAssets();
+
+  // add a clip filling the current section on the right track (spec §15.3)
+  function addAtPlayhead(genId) {
+    const gen = REGISTRY.get(genId);
+    if (!gen || !app.project) return;
+    const t = app.playback.t;
+    const sec = app.analysis ? sectionAt(app.analysis.sections, t) : null;
+    const start = sec ? Math.max(sec.start, t) : t;
+    const end = sec ? sec.end : Math.min(app.playback.duration || start + 8, start + 8);
+    const track = app.project.tracks.find(tr => tr.type === gen.track && !tr.lock)
+      || app.project.tracks.find(tr => tr.type === "visual");
+    if (!track) return;
+    const clip = makeClip(genId, start, end, {}, { seed: Math.floor(Math.random() * 9999) });
+    track.clips.push(clip);
+    sortTrack(track);
+    app.selection = clip.id;
+    app.commit();
+    app.toast(`${gen.name} → ${track.name}`);
+  }
+  app.addAtPlayhead = addAtPlayhead;
+
+  // ---- transport ----
+  const fmt = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, "0")}`;
+  function setPlayIcon() { $("tr-play").textContent = app.playback.playing ? "⏸" : "▶"; }
+  $("tr-play").addEventListener("click", () => {
+    app.playback.playing ? app.playback.pause() : app.playback.play();
+    setPlayIcon();
+  });
+  $("tr-start").addEventListener("click", () => app.playback.seek(0));
+  app.playback.onEnded = setPlayIcon;
+
+  $("ed-home").addEventListener("click", () => { app.playback.pause(); setPlayIcon(); app.show("home"); });
+
+  // ---- generate / seed ----
+  $("ed-regen").addEventListener("click", () => {
+    if (!app.analysis) return app.toast("No analysis — reimport audio");
+    app.project.seed = parseInt($("ed-seed").value, 10) || 1;
+    generateShow(app.project, app.analysis);
+    app.commit();
+    app.toast("Show regenerated (user-edited clips kept)");
+  });
+  $("ed-seed").addEventListener("change", () => {
+    app.project.seed = parseInt($("ed-seed").value, 10) || 1;
+  });
+
+  $("ed-export").addEventListener("click", () => app.emit("openExport"));
+
+  // ---- preview quality ----
+  $("pv-quality").addEventListener("click", () => {
+    autoQuality = false;
+    quality = quality === 1 ? 0.5 : quality === 0.5 ? 0.25 : 1;
+    $("pv-quality").textContent = quality === 1 ? "Full" : quality === 0.5 ? "Half" : "Quarter";
+  });
+  $("pv-full").addEventListener("click", () => {
+    (document.fullscreenElement ? document.exitFullscreen() : $("ed-preview-wrap").requestFullscreen()).catch(() => {});
+  });
+
+  app.on("openEditor", () => {
+    $("tr-bpm").textContent = app.analysis ? `${app.analysis.bpm} BPM` : "";
+    $("ed-seed").value = app.project.seed;
+    app.playback.seek(0);
+    app.playback.play();
+    setPlayIcon();
+  });
+
+  // ---- render loop ----
+  let lastFrame = performance.now();
+  function frame() {
+    requestAnimationFrame(frame);
+    if ($("scr-editor").hidden || !app.project) return;
+
+    const now = performance.now();
+    const dt = now - lastFrame;
+    lastFrame = now;
+    fpsSamples.push(1000 / Math.max(1, dt));
+    if (fpsSamples.length > 30) fpsSamples.shift();
+    const fps = fpsSamples.reduce((a, b) => a + b, 0) / fpsSamples.length;
+
+    // adaptive preview resolution (spec §14.3)
+    if (autoQuality) {
+      if (fps < 38 && quality > 0.25) { quality = quality === 1 ? 0.5 : 0.25; fpsSamples = []; }
+      else if (fps > 57 && quality < 1) { quality = quality === 0.25 ? 0.5 : 1; fpsSamples = []; }
+      $("pv-quality").textContent = quality === 1 ? "Full" : quality === 0.5 ? "Half" : "Quarter";
+    }
+    const W = Math.round(1280 * quality), H = Math.round(720 * quality);
+    if (preview.width !== W) { preview.width = W; preview.height = H; }
+
+    const t = app.playback.t;
+    app.engine.render(app.project, app.analysis, t, pvCtx, W, H);
+
+    // HUD
+    const fpsEl = $("pv-fps");
+    fpsEl.textContent = fps.toFixed(0);
+    fpsEl.style.color = fps >= 55 ? "#7dff8a" : fps >= 40 ? "#ffcf40" : "#ff6060";
+    $("tr-time").textContent = fmt(t);
+    if (app.analysis) {
+      const sec = sectionAt(app.analysis.sections, t);
+      $("pv-section").textContent = sec ? (SECTION_LABELS[sec.type] || sec.type) : "—";
+      // beat dot
+      const beats = app.analysis.beats;
+      let lo = 0, hi = beats.length;
+      while (lo < hi) { const m = (lo + hi) >> 1; (beats[m] <= t) ? lo = m + 1 : hi = m; }
+      const since = lo > 0 ? t - beats[lo - 1] : 9;
+      $("pv-beat").classList.toggle("on", since < 0.09);
+    }
+    app.emit("frame", t);
+  }
+  frame();
+
+  // ---- keyboard shortcuts (spec §15.1 subset) ----
+  document.addEventListener("keydown", e => {
+    if ($("scr-editor").hidden) return;
+    const tag = e.target.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+    const mod = e.ctrlKey || e.metaKey;
+
+    if (e.code === "Space") { e.preventDefault(); $("tr-play").click(); }
+    else if (e.key === "Home") app.playback.seek(0);
+    else if (e.key === "ArrowLeft") app.playback.seek(app.playback.t - (e.shiftKey ? 60 / (app.analysis?.bpm || 120) : 1 / 30));
+    else if (e.key === "ArrowRight") app.playback.seek(app.playback.t + (e.shiftKey ? 60 / (app.analysis?.bpm || 120) : 1 / 30));
+    else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      if (!app.analysis) return;
+      e.preventDefault();
+      const t = app.playback.t, secs = app.analysis.sections;
+      if (e.key === "ArrowDown") {
+        const next = secs.find(s => s.start > t + 0.05);
+        if (next) app.playback.seek(next.start);
+      } else {
+        const cur = sectionAt(secs, t);
+        if (cur && t - cur.start > 0.5) app.playback.seek(cur.start);
+        else {
+          const prev = [...secs].reverse().find(s => s.start < t - 0.05 && (!cur || s.start < cur.start));
+          app.playback.seek(prev ? prev.start : 0);
+        }
+      }
+    }
+    else if (e.key.toLowerCase() === "n") { const s = $("ed-snap"); s.checked = !s.checked; }
+    else if (e.key.toLowerCase() === "f") $("pv-full").click();
+    else if (mod && e.key.toLowerCase() === "z") {
+      e.preventDefault();
+      const p = e.shiftKey ? redoOp(app.history) : undoOp(app.history, app.project);
+      if (p) { app.project = p; app.selection = null; app.emit("projectChanged"); }
+    }
+    else if (mod && e.key.toLowerCase() === "e") { e.preventDefault(); app.emit("openExport"); }
+    else if (mod && e.key.toLowerCase() === "g" && e.shiftKey) { e.preventDefault(); $("ed-regen").click(); }
+    else app.emit("key", e);   // timeline handles clip-level keys
+  });
+}
+
+// ===== js/ui/timeline.js =====
+// Timeline editor + navigator (spec §9). Canvas-drawn: ruler with sections,
+// track lanes, clips (move/trim/blade/duplicate/delete), beat-grid
+// snapping, wheel zoom/scroll. The navigator is the whole-track V1 strip
+// with a viewport rectangle.
+
+
+const RULER_H = 26, GUTTER = 118, TRACK_H = 34;
+const TRACK_COLORS = { camera: "#9aa7ff", adjust: "#ff7ad0", visual: "#c8ff00", transition: "#ffffff" };
+
+function initTimeline(app) {
+  const tl = $("tl-canvas"), nav = $("nav-canvas");
+  const tctx = tl.getContext("2d"), nctx = nav.getContext("2d");
+  let view = { t0: 0, pxPerSec: 8 };
+  let drag = null;
+  let hover = null;
+
+  const dur = () => (app.analysis ? app.analysis.duration : app.playback.duration) || 60;
+  const X = t => GUTTER + (t - view.t0) * view.pxPerSec * dpr();
+  const T = x => view.t0 + (x - GUTTER) / (view.pxPerSec * dpr());
+  const dpr = () => window.devicePixelRatio || 1;
+
+  // ---------------- drawing ----------------
+  function draw() {
+    const r = tl.getBoundingClientRect();
+    tl.width = r.width * dpr(); tl.height = r.height * dpr();
+    const w = tl.width, h = tl.height, d = dpr();
+    tctx.clearRect(0, 0, w, h);
+    if (!app.project) return;
+    const a = app.analysis;
+
+    // ---- ruler: sections + bars ----
+    if (a) {
+      for (const s of a.sections) {
+        tctx.fillStyle = SECTION_COLORS[s.type] || "#444";
+        tctx.globalAlpha = 0.7;
+        tctx.fillRect(X(s.start), 0, (s.end - s.start) * view.pxPerSec * d, RULER_H * d * 0.5);
+      }
+      tctx.globalAlpha = 1;
+      const pxPerBeat = (60 / a.bpm) * view.pxPerSec;
+      if (pxPerBeat > 4) {
+        tctx.fillStyle = "rgba(255,255,255,.25)";
+        for (const b of a.beats) {
+          const x = X(b);
+          if (x < GUTTER || x > w) continue;
+          tctx.fillRect(x, RULER_H * d * 0.5, 1, RULER_H * d * 0.5);
+        }
+      }
+      tctx.fillStyle = "rgba(255,255,255,.6)";
+      for (const b of a.bars) {
+        const x = X(b);
+        if (x < GUTTER || x > w) continue;
+        tctx.fillRect(x, RULER_H * d * 0.35, 1, RULER_H * d * 0.65);
+      }
+    }
+    // time labels
+    tctx.fillStyle = "#8888a0";
+    tctx.font = `${9 * d}px system-ui`;
+    const step = view.pxPerSec > 40 ? 5 : view.pxPerSec > 12 ? 15 : 60;
+    for (let t = Math.ceil(view.t0 / step) * step; X(t) < w; t += step) {
+      tctx.fillText(`${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`, X(t) + 3, RULER_H * d - 4);
+    }
+
+    // ---- tracks ----
+    app.project.tracks.forEach((tr, i) => {
+      const y = (RULER_H + i * TRACK_H) * d;
+      // lane
+      tctx.fillStyle = i % 2 ? "#10101a" : "#0e0e16";
+      tctx.fillRect(GUTTER, y, w - GUTTER, TRACK_H * d);
+      // gutter
+      tctx.fillStyle = "#15151f";
+      tctx.fillRect(0, y, GUTTER, TRACK_H * d);
+      tctx.fillStyle = TRACK_COLORS[tr.type] || "#888";
+      tctx.fillRect(0, y, 3 * d, TRACK_H * d);
+      tctx.fillStyle = tr.mute ? "#555" : "#c8c8d8";
+      tctx.font = `${10 * d}px system-ui`;
+      tctx.fillText(tr.name, 8 * d, y + 14 * d);
+      // M / S toggles
+      tctx.font = `${9 * d}px system-ui`;
+      tctx.fillStyle = tr.mute ? "#ff6060" : "#555";
+      tctx.fillText("M", 8 * d, y + 27 * d);
+      tctx.fillStyle = tr.solo ? "#c8ff00" : "#555";
+      tctx.fillText("S", 22 * d, y + 27 * d);
+
+      // clips
+      for (const c of tr.clips) {
+        const x0 = X(c.start), x1 = X(c.end);
+        if (x1 < GUTTER || x0 > w) continue;
+        const cw = Math.max(3, x1 - x0);
+        const gen = REGISTRY.get(c.gen);
+        const col = TRACK_COLORS[tr.type] || "#888";
+        const sel = app.selection === c.id;
+        tctx.fillStyle = sel ? col : col + "55";
+        roundRect(tctx, Math.max(GUTTER, x0), y + 3 * d, cw - (Math.max(GUTTER, x0) - x0), (TRACK_H - 6) * d, 4 * d);
+        tctx.fill();
+        if (sel) { tctx.strokeStyle = "#fff"; tctx.lineWidth = 1.5 * d; tctx.stroke(); }
+        if (cw > 34 * d) {
+          tctx.fillStyle = sel ? "#000" : "#e8e8f0";
+          tctx.font = `${9.5 * d}px system-ui`;
+          const label = (c.auto ? "⚡" : "") + (gen ? gen.name : c.gen);
+          tctx.save();
+          tctx.beginPath();
+          tctx.rect(Math.max(GUTTER, x0), y, cw, TRACK_H * d);
+          tctx.clip();
+          tctx.fillText(label, Math.max(GUTTER, x0) + 5 * d, y + 16 * d);
+          tctx.restore();
+        }
+      }
+    });
+
+    // playhead
+    const px = X(app.playback.t);
+    if (px >= GUTTER) {
+      tctx.fillStyle = "#fff";
+      tctx.fillRect(px, 0, Math.max(1, 1.5 * d), h);
+    }
+    drawNav();
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  // ---- navigator (kept V1 strip, §9.2) ----
+  function drawNav() {
+    const r = nav.getBoundingClientRect();
+    nav.width = r.width * dpr(); nav.height = r.height * dpr();
+    const w = nav.width, h = nav.height;
+    nctx.clearRect(0, 0, w, h);
+    const a = app.analysis;
+    if (!a) return;
+    const D = dur();
+    for (const s of a.sections) {
+      nctx.fillStyle = SECTION_COLORS[s.type] || "#444";
+      nctx.globalAlpha = 0.55;
+      nctx.fillRect(s.start / D * w, 0, (s.end - s.start) / D * w, h);
+    }
+    nctx.globalAlpha = 1;
+    nctx.strokeStyle = "rgba(255,255,255,.85)";
+    nctx.lineWidth = dpr();
+    nctx.beginPath();
+    const E = a.curves.energy;
+    for (let x = 0; x < w; x += 2) {
+      const y = h - E[Math.min(E.length - 1, Math.floor(x / w * E.length))] * (h - 4) - 2;
+      x === 0 ? nctx.moveTo(x, y) : nctx.lineTo(x, y);
+    }
+    nctx.stroke();
+    // viewport rect
+    const vw = tl.getBoundingClientRect().width;
+    const visS = (vw * dpr() - GUTTER) / (view.pxPerSec * dpr());
+    nctx.strokeStyle = "#c8ff00";
+    nctx.lineWidth = dpr();
+    nctx.strokeRect(view.t0 / D * w, 1, visS / D * w, h - 2);
+    // playhead
+    nctx.fillStyle = "#fff";
+    nctx.fillRect(app.playback.t / D * w, 0, dpr(), h);
+  }
+
+  nav.addEventListener("pointerdown", e => {
+    const r = nav.getBoundingClientRect();
+    const t = (e.clientX - r.left) / r.width * dur();
+    app.playback.seek(t);
+    centerOn(t);
+  });
+
+  function centerOn(t) {
+    const vw = (tl.getBoundingClientRect().width * dpr() - GUTTER) / (view.pxPerSec * dpr());
+    view.t0 = Math.max(0, t - vw / 2);
+  }
+
+  // ---------------- snapping (spec §9.5) ----------------
+  function snapPoints(excludeClipId) {
+    const pts = [];
+    const a = app.analysis;
+    if (a) {
+      for (const s of a.sections) { pts.push(s.start); pts.push(s.end); }
+      for (const b of a.bars) pts.push(b);
+      const pxPerBeat = (60 / a.bpm) * view.pxPerSec;
+      if (pxPerBeat > 6) for (const b of a.beats) pts.push(b);
+    }
+    for (const tr of app.project.tracks)
+      for (const c of tr.clips) {
+        if (c.id === excludeClipId) continue;
+        pts.push(c.start); pts.push(c.end);
+      }
+    return pts;
+  }
+  function snap(t, pts) {
+    if (!$("ed-snap").checked) return t;
+    const thresh = 8 / view.pxPerSec;
+    let best = t, bd = thresh;
+    for (const p of pts) { const d = Math.abs(p - t); if (d < bd) { bd = d; best = p; } }
+    return best;
+  }
+
+  // ---------------- hit testing ----------------
+  function hit(e) {
+    const r = tl.getBoundingClientRect();
+    const x = (e.clientX - r.left) * dpr(), y = (e.clientY - r.top) * dpr();
+    if (y < RULER_H * dpr()) return { zone: "ruler", t: T(x) };
+    const ti = Math.floor((y / dpr() - RULER_H) / TRACK_H);
+    const track = app.project.tracks[ti];
+    if (!track) return { zone: "empty", t: T(x) };
+    if (x < GUTTER) {
+      const ly = y / dpr() - RULER_H - ti * TRACK_H;
+      if (ly > 18) return { zone: e.clientX - r.left < 18 ? "mute" : "solo", track };
+      return { zone: "gutter", track };
+    }
+    const t = T(x);
+    for (const c of [...track.clips].reverse()) {
+      if (t >= c.start && t <= c.end) {
+        const x0 = X(c.start), x1 = X(c.end);
+        const edge = 6 * dpr();
+        if (x - x0 < edge) return { zone: "trimL", track, clip: c, t };
+        if (x1 - x < edge) return { zone: "trimR", track, clip: c, t };
+        return { zone: "clip", track, clip: c, t };
+      }
+    }
+    return { zone: "lane", track, trackIndex: ti, t };
+  }
+
+  // ---------------- pointer interactions ----------------
+  tl.addEventListener("pointerdown", e => {
+    if (!app.project) return;
+    const h = hit(e);
+    tl.setPointerCapture(e.pointerId);
+    if (h.zone === "ruler" || h.zone === "empty" || h.zone === "lane") {
+      app.playback.seek(Math.max(0, h.t));
+      if (h.zone !== "ruler") { app.selection = null; app.emit("selectionChanged"); }
+      drag = { kind: "scrub" };
+    } else if (h.zone === "mute") { h.track.mute = !h.track.mute; app.commit(); }
+    else if (h.zone === "solo") { h.track.solo = !h.track.solo; app.commit(); }
+    else if (h.zone === "clip") {
+      app.selection = h.clip.id;
+      app.emit("selectionChanged");
+      drag = { kind: "move", clip: h.clip, track: h.track, grabDt: h.t - h.clip.start, len: h.clip.end - h.clip.start, pts: snapPoints(h.clip.id), moved: false };
+    } else if (h.zone === "trimL" || h.zone === "trimR") {
+      app.selection = h.clip.id;
+      app.emit("selectionChanged");
+      drag = { kind: h.zone, clip: h.clip, pts: snapPoints(h.clip.id) };
+    }
+    draw();
+  });
+
+  tl.addEventListener("pointermove", e => {
+    if (!app.project) return;
+    if (!drag) {
+      const h = hit(e);
+      tl.style.cursor = h.zone === "trimL" || h.zone === "trimR" ? "col-resize"
+        : h.zone === "clip" ? "grab" : h.zone.startsWith("gut") || h.zone === "mute" || h.zone === "solo" ? "pointer" : "default";
+      return;
+    }
+    const h = hit(e);
+    if (drag.kind === "scrub") { app.playback.seek(Math.max(0, h.t ?? 0)); return; }
+    const c = drag.clip;
+    if (drag.kind === "move") {
+      let ns = snap(h.t - drag.grabDt, drag.pts);
+      // also snap the clip END edge
+      const endSnap = snap(ns + drag.len, drag.pts);
+      if (Math.abs(endSnap - (ns + drag.len)) < 1e-9) { /* no end snap */ } else ns = endSnap - drag.len;
+      ns = Math.max(0, ns);
+      if (Math.abs(ns - c.start) > 1e-6) { drag.moved = true; }
+      c.start = ns; c.end = ns + drag.len;
+      // vertical move between same-type tracks
+      if (h.track && h.track !== drag.track && h.track.type === drag.track.type && !h.track.lock) {
+        removeClip(app.project, c.id);
+        h.track.clips.push(c);
+        sortTrack(h.track);
+        drag.track = h.track;
+      }
+    } else if (drag.kind === "trimL") {
+      c.start = Math.min(snap(h.t, drag.pts), c.end - 0.1);
+      c.start = Math.max(0, c.start);
+      drag.moved = true;
+    } else if (drag.kind === "trimR") {
+      c.end = Math.max(snap(h.t, drag.pts), c.start + 0.1);
+      drag.moved = true;
+    }
+    draw();
+  });
+
+  tl.addEventListener("pointerup", () => {
+    if (drag && drag.clip && drag.moved) {
+      drag.clip.auto = false;         // user edit clears the Director badge (§9.8)
+      sortTrack(drag.track || findClip(app.project, drag.clip.id).track);
+      app.commit();
+    }
+    drag = null;
+  });
+
+  // wheel: scroll / zoom (ctrl or pinch)
+  $("ed-timeline").addEventListener("wheel", e => {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey) {
+      const r = tl.getBoundingClientRect();
+      const pivot = T((e.clientX - r.left) * dpr());
+      const f = Math.exp(-e.deltaY * 0.002);
+      view.pxPerSec = Math.max(1, Math.min(200, view.pxPerSec * f));
+      view.t0 = Math.max(0, pivot - ((e.clientX - r.left) * dpr() - GUTTER) / (view.pxPerSec * dpr()));
+    } else {
+      view.t0 = Math.max(0, view.t0 + (e.deltaY + e.deltaX) / view.pxPerSec * 0.5);
+    }
+    draw();
+  }, { passive: false });
+
+  // ---- drag & drop from asset browser (spec §15.3) ----
+  tl.addEventListener("dragover", e => {
+    if (e.dataTransfer.types.includes("text/poopdog-gen")) e.preventDefault();
+  });
+  tl.addEventListener("drop", e => {
+    const genId = e.dataTransfer.getData("text/poopdog-gen");
+    const gen = REGISTRY.get(genId);
+    if (!gen) return;
+    e.preventDefault();
+    const h = hit(e);
+    let track = h.track;
+    if (!track || track.type !== gen.track) {
+      track = app.project.tracks.find(tr => tr.type === gen.track && !tr.lock);
+    }
+    if (!track) return;
+    const t = snap(Math.max(0, h.t ?? app.playback.t), snapPoints());
+    const a = app.analysis;
+    const sec = a ? a.sections.find(s => t >= s.start && t < s.end) : null;
+    const end = sec ? sec.end : Math.min(dur(), t + 8);
+    const clip = makeClip(genId, t, end, {}, { seed: Math.floor(Math.random() * 9999) });
+    track.clips.push(clip);
+    sortTrack(track);
+    app.selection = clip.id;
+    app.commit();
+    app.emit("selectionChanged");
+  });
+
+  // ---- clip-level keys ----
+  app.on("key", e => {
+    const sel = app.selection && findClip(app.project, app.selection);
+    const mod = e.ctrlKey || e.metaKey;
+    if (!sel) return;
+    if (e.key === "Delete" || e.key === "Backspace") {
+      removeClip(app.project, sel.clip.id);
+      app.selection = null;
+      app.commit();
+      app.emit("selectionChanged");
+    } else if (mod && e.key.toLowerCase() === "d") {
+      e.preventDefault();
+      const c = sel.clip, len = c.end - c.start;
+      const copy = makeClip(c.gen, c.end, c.end + len, { ...c.params },
+        { mods: JSON.parse(JSON.stringify(c.mods)), mode: c.mode, seed: c.seed + 1, fadeIn: c.fadeIn, fadeOut: c.fadeOut });
+      sel.track.clips.push(copy);
+      sortTrack(sel.track);
+      app.selection = copy.id;
+      app.commit();
+      app.emit("selectionChanged");
+    } else if (e.key.toLowerCase() === "b") {
+      // blade at playhead (spec §9.6)
+      const t = app.playback.t, c = sel.clip;
+      if (t > c.start + 0.1 && t < c.end - 0.1) {
+        const right = makeClip(c.gen, t, c.end, { ...c.params },
+          { mods: JSON.parse(JSON.stringify(c.mods)), mode: c.mode, seed: c.seed, fadeOut: c.fadeOut });
+        c.end = t; c.fadeOut = 0; c.auto = false;
+        sel.track.clips.push(right);
+        sortTrack(sel.track);
+        app.commit();
+      }
+    }
+  });
+
+  // redraw on state changes + every frame (playhead)
+  app.on("projectChanged", draw);
+  app.on("selectionChanged", draw);
+  app.on("frame", () => { if (!$("scr-editor").hidden) draw(); });
+  app.on("openEditor", () => { view = { t0: 0, pxPerSec: Math.max(2, (tl.getBoundingClientRect().width - 130) / dur()) }; draw(); });
+  window.addEventListener("resize", draw);
+}
+
+// ===== js/ui/inspector.js =====
+// Inspector panel (spec §10): universal controls, effect-specific params,
+// modulation slots, mode switch, randomise/reset/delete.
+
+
+function initInspector(app) {
+  const body = $("in-body"), empty = $("in-empty");
+  let commitTimer = null;
+
+  const touched = clip => { clip.auto = false; scheduleCommit(); };
+  function scheduleCommit() {
+    clearTimeout(commitTimer);
+    commitTimer = setTimeout(() => app.commit(), 400);
+  }
+
+  function render() {
+    const found = app.selection && app.project ? findClip(app.project, app.selection) : null;
+    if (!found) { body.hidden = true; empty.hidden = false; return; }
+    const { clip, track } = found;
+    const gen = REGISTRY.get(clip.gen);
+    if (!gen) { body.hidden = true; empty.hidden = false; return; }
+    body.hidden = false; empty.hidden = true;
+    body.innerHTML = "";
+
+    // ---- header ----
+    const head = el(`<div class="in-head">
+      <span class="name">${gen.name}</span>
+      <button class="mini" data-act="rand" title="Randomise">🎲</button>
+      <button class="mini" data-act="reset" title="Reset">↺</button>
+      <button class="mini" data-act="del" title="Delete">✕</button>
+    </div>
+    <div class="dim" style="font-size:11px">${gen.category} · ${track.name}${clip.auto ? " · ⚡ director" : ""}</div>`);
+    body.appendChild(head);
+    body.querySelector('[data-act="del"]').onclick = () => {
+      removeClip(app.project, clip.id);
+      app.selection = null;
+      app.commit();
+      app.emit("selectionChanged");
+    };
+    body.querySelector('[data-act="reset"]').onclick = () => {
+      clip.params = {}; clip.mods = JSON.parse(JSON.stringify(gen.defaultMods || []));
+      touched(clip); render();
+    };
+    body.querySelector('[data-act="rand"]').onclick = () => {
+      clip.seed = Math.floor(Math.random() * 99999);
+      for (const p of gen.params) {
+        if (p.select !== undefined) continue;
+        const base = clip.params[p.key] ?? p.def;
+        const jit = (hash01(clip.seed, p.key.length) - 0.5) * 0.3 * (p.max - p.min);
+        clip.params[p.key] = clamp(base + jit, p.min, p.max, p.step);
+      }
+      touched(clip); render();
+    };
+
+    // ---- mode switch (spec §8.3) ----
+    const seg = el(`<div class="seg">
+      <button data-m="auto">Auto reactive</button>
+      <button data-m="manual">Manual</button>
+    </div>`);
+    body.appendChild(seg);
+    for (const b of seg.querySelectorAll("button")) {
+      b.classList.toggle("on", clip.mode === b.dataset.m);
+      b.onclick = () => { clip.mode = b.dataset.m; touched(clip); render(); };
+    }
+
+    // ---- timing ----
+    body.appendChild(el(`<h4>Timing</h4>`));
+    numRow(body, "Fade in", clip.fadeIn, 0, 5, 0.05, v => { clip.fadeIn = v; touched(clip); });
+    numRow(body, "Fade out", clip.fadeOut, 0, 5, 0.05, v => { clip.fadeOut = v; touched(clip); });
+
+    // ---- universal ----
+    body.appendChild(el(`<h4>Universal</h4>`));
+    for (const d of UNIVERSAL) {
+      numRow(body, d.label, clip.params[d.key] ?? d.def, d.min, d.max, d.step,
+        v => { clip.params[d.key] = v; touched(clip); }, hasMod(clip, d.key));
+    }
+    if (gen.track === "visual") {
+      selRow(body, "Blend", clip.params.blend || "add", BLENDS, v => { clip.params.blend = v; touched(clip); });
+      numRow(body, "Palette slot", clip.params.palIdx ?? 0, 0, 3, 1, v => { clip.params.palIdx = v; touched(clip); });
+    }
+
+    // ---- effect-specific ----
+    if (gen.params.length) {
+      body.appendChild(el(`<h4>${gen.name}</h4>`));
+      for (const d of gen.params) {
+        if (d.select !== undefined) {
+          selRow(body, d.label, clip.params[d.key] ?? d.def, d.select, v => { clip.params[d.key] = v; touched(clip); });
+        } else {
+          numRow(body, d.label, clip.params[d.key] ?? d.def, d.min, d.max, d.step,
+            v => { clip.params[d.key] = v; touched(clip); }, hasMod(clip, d.key));
+        }
+      }
+    }
+
+    // ---- modulation (spec §8) ----
+    body.appendChild(el(`<h4>Audio modulation</h4>`));
+    clip.mods.forEach((m, i) => {
+      const slot = el(`<div class="modslot">
+        <button class="mini rm">✕</button>
+        <div class="in-row"><label>Param</label><select data-k="param"></select></div>
+        <div class="in-row"><label>Source</label><select data-k="source"></select></div>
+      </div>`);
+      const pSel = slot.querySelector('[data-k="param"]');
+      for (const p of numericParams(gen)) pSel.add(new Option(p.label, p.key, false, m.param === p.key));
+      pSel.onchange = () => { m.param = pSel.value; touched(clip); };
+      const sSel = slot.querySelector('[data-k="source"]');
+      for (const s of ALL_SOURCES) sSel.add(new Option(s, s, false, m.source === s));
+      sSel.onchange = () => { m.source = sSel.value; touched(clip); };
+      numRow(slot, "Amount", m.amount, -1, 1, 0.01, v => { m.amount = v; touched(clip); });
+      numRow(slot, "Attack ms", m.attackMs ?? 0, 0, 500, 5, v => { m.attackMs = v; touched(clip); });
+      numRow(slot, "Release ms", m.releaseMs ?? 150, 10, 1500, 5, v => { m.releaseMs = v; touched(clip); });
+      slot.querySelector(".rm").onclick = () => { clip.mods.splice(i, 1); touched(clip); render(); };
+      body.appendChild(slot);
+    });
+    const add = el(`<button class="mini" style="width:100%">+ Add modulation</button>`);
+    add.onclick = () => {
+      clip.mods.push({ param: "intensity", source: "kick", amount: 0.5, attackMs: 0, releaseMs: 150, bypass: false });
+      touched(clip); render();
+    };
+    body.appendChild(add);
+  }
+
+  const hasMod = (clip, key) => clip.mods && clip.mods.some(m => m.param === key && !m.bypass);
+  const clamp = (v, min, max, step) => {
+    v = Math.max(min, Math.min(max, v));
+    return step >= 1 ? Math.round(v) : Math.round(v / step) * step;
+  };
+
+  function el(html) {
+    const d = document.createElement("div");
+    d.innerHTML = html;
+    return d.children.length === 1 ? d.firstElementChild : d;
+  }
+
+  function numRow(parent, label, value, min, max, step, onInput, modded = false) {
+    const row = el(`<div class="in-row">
+      <label>${modded ? "〜 " : ""}${label}</label>
+      <input type="range" min="${min}" max="${max}" step="${step}" value="${value}">
+      <span class="val">${fmtVal(value, step)}</span>
+    </div>`);
+    const input = row.querySelector("input"), val = row.querySelector(".val");
+    input.addEventListener("input", () => {
+      const v = parseFloat(input.value);
+      val.textContent = fmtVal(v, step);
+      onInput(v);
+    });
+    input.addEventListener("dblclick", () => {   // dbl-click = type a value
+      const v = prompt(label, input.value);
+      if (v !== null && !isNaN(parseFloat(v))) {
+        input.value = parseFloat(v);
+        input.dispatchEvent(new Event("input"));
+      }
+    });
+    parent.appendChild(row);
+  }
+  const fmtVal = (v, step) => step >= 1 ? String(Math.round(v)) : (+v).toFixed(2);
+
+  function selRow(parent, label, value, options, onChange) {
+    const row = el(`<div class="in-row"><label>${label}</label><select></select></div>`);
+    const sel = row.querySelector("select");
+    for (const o of options) sel.add(new Option(o, o, false, o === value));
+    sel.onchange = () => onChange(sel.value);
+    parent.appendChild(row);
+  }
+
+  app.on("selectionChanged", render);
+  app.on("projectChanged", () => { if (!body.hidden) render(); });
+}
+
+// ===== js/ui/exportPage.js =====
+// Export page (spec §4.6, §13): MP4-first offline render with progress,
+// ETA, cancel; WebM realtime capture as the labelled legacy fallback.
+
+
+const PRESETS = [
+  { name: "YouTube 1080p60", res: "1920x1080", fps: 60, q: 75 },
+  { name: "YouTube 4K30", res: "3840x2160", fps: 30, q: 80 },
+  { name: "TikTok 9:16", res: "1080x1920", fps: 60, q: 70 },
+  { name: "Instagram 1:1", res: "1080x1080", fps: 30, q: 70 },
+];
+
+function initExport(app) {
+  let cancelFlag = false, rendering = false, webmRec = null;
+
+  const presetsEl = $("ex-presets");
+  for (const p of PRESETS) {
+    const b = document.createElement("button");
+    b.className = "mini";
+    b.textContent = p.name;
+    b.onclick = () => {
+      $("ex-res").value = p.res;
+      $("ex-fps").value = String(p.fps);
+      $("ex-q").value = p.q;
+      $("ex-qv").textContent = p.q;
+    };
+    presetsEl.appendChild(b);
+  }
+  $("ex-q").addEventListener("input", e => { $("ex-qv").textContent = e.target.value; });
+
+  app.on("openExport", () => {
+    if (!app.project) return;
+    const clips = app.project.tracks.reduce((s, tr) => s + tr.clips.length, 0);
+    $("ex-summary").textContent =
+      `${app.project.name} — ${fmt(app.playback.duration)} · ${app.project.tracks.length} tracks · ${clips} clips` +
+      (app.analysis ? ` · ${app.analysis.bpm} BPM` : "");
+    $("ex-note").textContent = typeof VideoEncoder === "undefined"
+      ? "WebCodecs unavailable here — MP4 disabled, WebM fallback only." : "";
+    $("ex-progress").hidden = true;
+    $("scr-export").hidden = false;
+  });
+
+  $("ex-close").addEventListener("click", () => {
+    if (rendering) { cancelFlag = true; if (webmRec) webmRec.stop(); }
+    $("scr-export").hidden = true;
+  });
+
+  $("ex-start").addEventListener("click", async () => {
+    if (rendering) { cancelFlag = true; if (webmRec) webmRec.stop(); return; }
+    const [width, height] = $("ex-res").value.split("x").map(Number);
+    const fps = parseInt($("ex-fps").value, 10);
+    const quality = parseInt($("ex-q").value, 10);
+    const range = $("ex-range").value;
+    const durationS = range === "all" ? app.playback.duration : Math.min(app.playback.duration, parseFloat(range));
+    const format = $("ex-format").value;
+
+    cancelFlag = false;
+    rendering = true;
+    $("ex-start").textContent = "Cancel";
+    $("ex-progress").hidden = false;
+
+    try {
+      if (format === "mp4") {
+        const t0 = performance.now();
+        const { blob, videoCodec, audioCodec } = await exportMP4({
+          engine: app.engine, project: app.project, analysis: app.analysis,
+          audioBuffer: app.audioBuffer, width, height, fps, quality, durationS,
+          shouldCancel: () => cancelFlag,
+          onProgress: p => {
+            const pct = p.frame / p.total * 100;
+            $("ex-bar-fill").style.width = pct + "%";
+            const eta = p.fps > 0 ? (p.total - p.frame) / p.fps : 0;
+            $("ex-stats").textContent = p.stage === "mux" ? "Muxing…"
+              : `frame ${p.frame}/${p.total} · ${p.fps.toFixed(0)} fps · ETA ${fmt(eta)}`;
+          },
+        });
+        const secs = ((performance.now() - t0) / 1000).toFixed(1);
+        download(blob, `${app.project.name}_${height}p${fps}.mp4`);
+        $("ex-stats").textContent =
+          `Done in ${secs}s — ${(blob.size / 1e6).toFixed(1)} MB (${videoCodec === "avc" ? "H.264" : "VP9"} + ${audioCodec})`;
+        $("ex-bar-fill").style.width = "100%";
+        app.lastExport = blob;      // test hook
+        app.toast(`Exported MP4 · ${(blob.size / 1e6).toFixed(1)} MB`);
+      } else {
+        await webmCapture(durationS);
+      }
+    } catch (err) {
+      if (err.message !== "cancelled") {
+        $("ex-stats").textContent = "Export failed: " + err.message;
+        app.toast("Export failed: " + err.message, 5000);
+      } else {
+        $("ex-stats").textContent = "Cancelled";
+      }
+    }
+    rendering = false;
+    $("ex-start").textContent = "Render MP4";
+  });
+
+  // legacy realtime capture (V1 path)
+  function webmCapture(durationS) {
+    return new Promise(resolve => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1280; canvas.height = 720;
+      const ctx = canvas.getContext("2d");
+      app.playback.seek(0);
+      app.playback.play();
+      webmRec = exportWebM({
+        canvas, audioEngine: app.playback,
+        onDone: blob => {
+          download(blob, `${app.project.name}.webm`);
+          $("ex-stats").textContent = `WebM saved — ${(blob.size / 1e6).toFixed(1)} MB`;
+          webmRec = null;
+          resolve();
+        },
+      });
+      const t0 = performance.now();
+      (function loop() {
+        const t = app.playback.t;
+        app.engine.render(app.project, app.analysis, t, ctx, canvas.width, canvas.height);
+        $("ex-bar-fill").style.width = (t / durationS * 100) + "%";
+        $("ex-stats").textContent = `recording ${fmt(t)} / ${fmt(durationS)} (realtime)`;
+        if (t < durationS && !cancelFlag && (performance.now() - t0) / 1000 < durationS + 5) {
+          requestAnimationFrame(loop);
+        } else {
+          app.playback.pause();
+          webmRec && webmRec.stop();
+        }
+      })();
+    });
+  }
+
+  function download(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+  const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+}
+
+// ===== js/ui/app.js =====
+// App shell: shared state, screen router, playback clock, boot.
+
+const commitHistory = commit;
+
+const $ = id => document.getElementById(id);
+
+const app = {
+  project: null,
+  analysis: null,
+  audioBuffer: null,
+  history: null,
+  playback: new Playback(),
+  engine: makeEngine(),
+  selection: null,          // selected clip id
+  listeners: {},
+
+  on(ev, fn) { (this.listeners[ev] ||= []).push(fn); },
+  emit(ev, ...args) { for (const fn of this.listeners[ev] || []) fn(...args); },
+
+  show(screen) {
+    for (const s of ["home", "analysis", "editor"]) $("scr-" + s).hidden = s !== screen;
+    this.emit("screen", screen);
+  },
+
+  toast(msg, ms = 3200) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.hidden = false;
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => { el.hidden = true; }, ms);
+  },
+
+  setHistory() { this.history = makeHistory(this.project); },
+  commit() {
+    if (this.history) commitHistory(this.history, this.project);
+    this.emit("projectChanged");
+  },
+};
+
+// autosave loop (spec §15.6): every 2 minutes when a project is open
+setInterval(() => { if (app.project) autosave(app.project); }, 120000);
+window.addEventListener("beforeunload", () => { if (app.project) autosave(app.project); });
+
+initHome(app);
+initAnalysisScreen(app);
+initEditor(app);
+initExport(app);
+app.show("home");
+
+window.__poopdogBooted = true;
+
+})();
+</script>
+</body>
+</html>

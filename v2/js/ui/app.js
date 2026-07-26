@@ -53,3 +53,5 @@ initAnalysisScreen(app);
 initEditor(app);
 initExport(app);
 app.show("home");
+
+window.__poopdogBooted = true;
