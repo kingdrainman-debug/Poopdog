@@ -8,8 +8,18 @@ codebase an Electron/Tauri desktop shell would host.
 
 ```sh
 python3 -m http.server 8000     # any static server; ES modules need http://
-# open http://localhost:8000/v2/
+# open http://localhost:8000/v2/          (desktop editor)
+# open http://localhost:8000/v2/mobile.html  (mobile shell)
 ```
+
+**Mobile:** `mobile.html` is a touch-first shell over the *same* core
+modules — it imports `analysis.js`, `engine.js`, `director.js`,
+`playback.js` and `exporter.js` directly (unlike V1's condensed copy).
+One-tap flow: pick file → auto-analysed → Director show plays fullscreen.
+Controls: play, ⚡ new show (deterministic seed reroll), palette override,
+section scrubber, tap-to-hide. Exports real MP4 (vertical/landscape
+720p–1080p) through the same offline WebCodecs pipeline, with realtime
+WebM capture as the no-WebCodecs fallback.
 
 ## What's implemented (spec § references)
 
@@ -62,10 +72,12 @@ preview, dockable panels. The spec remains the source of truth.
 
 ```
 v2/
-  index.html            app shell (all screens)
+  index.html            desktop app shell (all screens)
+  mobile.html           mobile shell (same core modules, touch UI)
   css/app.css
   js/core/              engine-side (no DOM): prng, palettes, analysis,
-                        modulation, project, generators, engine, director
+                        modulation, project, generators, engine, director,
+                        playback
   js/ui/                app, home, analysisScreen, editor, timeline,
                         inspector, exportPage
   js/export/            exporter (WebCodecs), mp4muxer (ISO-BMFF)

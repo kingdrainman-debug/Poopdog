@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Poopdog V2 Mobile</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root { --accent: #c8ff00; --panel: rgba(14,14,22,.93); --dim: #8888a0; }
+html, body { height: 100%; overflow: hidden; background: #000; color: #e8e8f0; font-family: system-ui, sans-serif; }
+body { touch-action: none; }
+button { font-family: inherit; }
+
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+#start {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at center, #14141f 0%, #060609 100%);
+  text-align: center; padding: 24px;
+}
+#start[hidden] { display: none; }
+#start .icon { font-size: 52px; }
+#start h1 { font-size: 21px; letter-spacing: 2px; }
+#start h1 b { color: var(--accent); }
+#start p { color: var(--dim); font-size: 13px; line-height: 1.5; }
+#start button {
+  margin-top: 8px; padding: 14px 30px; font-size: 16px; font-weight: 700;
+  background: var(--accent); color: #000; border: 0; border-radius: 999px;
+}
+#start .v2tag { font-size: 10px; letter-spacing: 3px; color: var(--dim); }
+
+#busy {
+  position: fixed; inset: 0; z-index: 11; background: rgba(4,4,8,.9);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+#busy[hidden] { display: none; }
+.spin { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #2a2a3c; border-top-color: var(--accent); animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+#busy-msg { font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+#busy .bar { width: 70%; height: 6px; background: #22222f; border-radius: 3px; overflow: hidden; }
+#busy .bar[hidden] { display: none; }
+#busy-fill { height: 100%; width: 0; background: var(--accent); }
+#busy-cancel { background: #22222f; color: #e8e8f0; border: 0; border-radius: 8px; padding: 9px 22px; }
+#busy-cancel[hidden] { display: none; }
+
+#hud {
+  position: fixed; top: calc(env(safe-area-inset-top) + 10px); left: 12px; z-index: 5;
+  font-size: 11px; letter-spacing: 1px; background: rgba(0,0,0,.5);
+  padding: 5px 10px; border-radius: 999px; pointer-events: none; transition: opacity .3s;
+}
+#hud b { color: var(--accent); }
+#hud[hidden] { display: none; }
+
+#ui {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  background: var(--panel); backdrop-filter: blur(8px);
+  padding: 8px 12px calc(env(safe-area-inset-bottom) + 10px);
+  transition: transform .25s, opacity .25s;
+}
+#ui[hidden] { display: none; }
+#ui.tucked { transform: translateY(100%); opacity: 0; pointer-events: none; }
+#scrub { width: 100%; height: 34px; display: block; border-radius: 6px; }
+.row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+button.ctl {
+  background: #22222f; color: #e8e8f0; border: 0; border-radius: 10px;
+  padding: 11px 0; font-size: 14px; flex: 1;
+}
+button.ctl:active { background: #33334a; }
+#b-play { flex: 0 0 54px; font-size: 17px; background: var(--accent); color: #000; font-weight: 700; }
+#b-regen { font-weight: 700; }
+#b-export.busy { background: #ff3030; color: #fff; }
+select {
+  flex: 1; background: #22222f; color: #e8e8f0; border: 0; border-radius: 10px;
+  padding: 10px 8px; font-size: 13px; appearance: none; text-align: center;
+}
+#hint {
+  position: fixed; bottom: calc(env(safe-area-inset-bottom) + 8px); left: 0; right: 0; z-index: 4;
+  text-align: center; font-size: 11px; color: rgba(255,255,255,.45); pointer-events: none; transition: opacity .4s;
+}
+#toast {
+  position: fixed; top: calc(env(safe-area-inset-top) + 52px); left: 50%; transform: translateX(-50%);
+  z-index: 50; background: #1a1a26; border: 1px solid #2e2e44; padding: 9px 16px; border-radius: 8px;
+  font-size: 12px; max-width: 88vw;
+}
+#toast[hidden] { display: none; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="start">
+  <div class="icon">🌀</div>
+  <h1><b>POOPDOG</b> RAVE ENGINE</h1>
+  <div class="v2tag">V2 MOBILE · SAME ENGINE AS DESKTOP</div>
+  <p>Pick a DJ mix — BPM, beats, drops &amp; energy are detected,<br>
+     then the Director generates a full show. Export real MP4.</p>
+  <button id="b-open">Pick audio file</button>
+  <input type="file" id="file" accept="audio/*" hidden>
+</div>
+
+<div id="busy" hidden>
+  <div class="spin"></div>
+  <div id="busy-msg">Analysing…</div>
+  <div class="bar" hidden><div id="busy-fill"></div></div>
+  <button id="busy-cancel" hidden>Cancel</button>
+</div>
+
+<div id="hud" hidden><b id="h-bpm">—</b> · <span id="h-sec">—</span></div>
+<div id="hint" hidden>tap visuals to hide controls</div>
+
+<div id="ui" hidden>
+  <canvas id="scrub"></canvas>
+  <div class="row">
+    <button class="ctl" id="b-play">▶</button>
+    <button class="ctl" id="b-regen">⚡ New show</button>
+    <button class="ctl" id="b-export">⏺ MP4</button>
+  </div>
+  <div class="row">
+    <select id="s-pal"><option value="">Palette: Director</option></select>
+    <select id="s-res">
+      <option value="720x1280" selected>Export: vertical 720p</option>
+      <option value="1280x720">Export: landscape 720p</option>
+      <option value="1080x1920">Export: vertical 1080p</option>
+    </select>
+  </div>
+</div>
+
+<div id="toast" hidden></div>
+
+<script type="module">
+// ===== Poopdog V2 mobile shell — imports the real V2 core modules =====
+import { analyze, sectionAt } from "./js/core/analysis.js";
+import { makeEngine } from "./js/core/engine.js";
+import { generateShow } from "./js/core/director.js";
+import { makeProject, defaultTracks } from "./js/core/project.js";
+import { Playback } from "./js/core/playback.js";
+import { PALETTES, SECTION_LABELS, SECTION_COLORS } from "./js/core/palettes.js";
+import { exportMP4, exportWebM } from "./js/export/exporter.js";
+
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+const ctx = stage.getContext("2d");
+const engine = makeEngine();
+const playback = new Playback();
+
+let project = null, analysis = null, audioBuffer = null;
+let cancelExport = false, exporting = false;
+
+function toast(msg, ms = 3200) {
+  const el = $("toast");
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { el.hidden = true; }, ms);
+}
+
+// canvas sized to viewport, dpr-capped for mobile GPUs
+function fit() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  stage.width = Math.round(innerWidth * dpr);
+  stage.height = Math.round(innerHeight * dpr);
+}
+fit();
+addEventListener("resize", () => { fit(); drawScrub(); });
+
+// palette override select (empty = follow the Director's palette clips)
+for (const [k, p] of Object.entries(PALETTES)) $("s-pal").add(new Option("Palette: " + p.label, k));
+
+// ---- import -> analyse -> generate (the golden path, §4.9) ----
+$("b-open").addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", e => { if (e.target.files[0]) load(e.target.files[0]); e.target.value = ""; });
+
+async function load(file) {
+  $("start").hidden = true;
+  $("busy").hidden = false;
+  $("busy-msg").textContent = "Decoding…";
+  try {
+    const ab = await file.arrayBuffer();
+    audioBuffer = await playback.ctx.decodeAudioData(ab);
+    playback.buffer = audioBuffer;
+    analysis = await analyze(audioBuffer, m => { $("busy-msg").textContent = m; });
+
+    project = makeProject(file.name.replace(/\.[^.]+$/, ""));
+    project.audioName = file.name;
+    project.tracks = defaultTracks();
+    generateShow(project, analysis);
+
+    $("h-bpm").textContent = analysis.bpm + " BPM";
+    $("busy").hidden = true;
+    $("hud").hidden = false; $("ui").hidden = false; $("hint").hidden = false;
+    setTimeout(() => { $("hint").style.opacity = 0; }, 4000);
+    drawScrub();
+    playback.play();
+    $("b-play").textContent = "⏸";
+  } catch (err) {
+    $("busy").hidden = true;
+    $("start").hidden = false;
+    toast("Could not load: " + err.message, 5000);
+  }
+}
+
+// ---- transport ----
+$("b-play").addEventListener("click", () => {
+  if (!playback.buffer) return;
+  if (playback.playing) { playback.pause(); $("b-play").textContent = "▶"; }
+  else { playback.play(); $("b-play").textContent = "⏸"; }
+});
+playback.onEnded = () => { $("b-play").textContent = "▶"; };
+
+// ⚡ new show: reroll the Director seed (determinism law: same seed = same show)
+$("b-regen").addEventListener("click", () => {
+  if (!project) return;
+  project.seed = (project.seed % 9999) + 1;
+  generateShow(project, analysis);
+  toast(`New show — seed ${project.seed}`);
+  drawScrub();
+});
+
+// palette override rides on the project default; Director palette clips
+// still win while active, so "" removes them for a manual global palette
+$("s-pal").addEventListener("change", e => {
+  if (!project) return;
+  const v = e.target.value;
+  const fx = project.tracks.find(t => t.name === "FX / Colour");
+  if (v) {
+    if (!fx._savedPalettes) fx._savedPalettes = fx.clips.filter(c => c.gen === "fx.palette");
+    fx.clips = fx.clips.filter(c => c.gen !== "fx.palette");
+    project.palette = v;
+  } else if (fx._savedPalettes) {
+    fx.clips.push(...fx._savedPalettes);
+    fx.clips.sort((a, b) => a.start - b.start);
+    fx._savedPalettes = null;
+  }
+});
+
+// tap visuals to tuck/show controls
+stage.addEventListener("pointerdown", () => {
+  if (!project) return;
+  $("ui").classList.toggle("tucked");
+  $("hud").style.opacity = $("ui").classList.contains("tucked") ? 0 : 1;
+});
+
+// ---- scrubber: V1 navigator strip on the V2 analysis ----
+const scrub = $("scrub");
+function drawScrub() {
+  if (!analysis) return;
+  const r = scrub.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  scrub.width = r.width * dpr; scrub.height = 34 * dpr;
+  const c = scrub.getContext("2d"), w = scrub.width, h = scrub.height;
+  c.clearRect(0, 0, w, h);
+  const D = analysis.duration;
+  for (const s of analysis.sections) {
+    c.fillStyle = SECTION_COLORS[s.type] || "#444";
+    c.globalAlpha = .55;
+    c.fillRect(s.start / D * w, 0, (s.end - s.start) / D * w, h);
+  }
+  c.globalAlpha = 1;
+  c.strokeStyle = "rgba(255,255,255,.9)";
+  c.lineWidth = dpr;
+  c.beginPath();
+  const E = analysis.curves.energy;
+  for (let x = 0; x < w; x += 2) {
+    const y = h - E[Math.min(E.length - 1, (x / w * E.length) | 0)] * (h - 4) - 2;
+    x === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
+  }
+  c.stroke();
+}
+scrub.addEventListener("pointerdown", e => {
+  if (!playback.buffer) return;
+  const r = scrub.getBoundingClientRect();
+  playback.seek((e.clientX - r.left) / r.width * playback.duration);
+  if (playback.playing) $("b-play").textContent = "⏸";
+});
+
+// ---- export: the V2 offline deterministic MP4 path ----
+$("b-export").addEventListener("click", async () => {
+  if (!project) return;
+  if (exporting) { cancelExport = true; return; }
+  const [width, height] = $("s-res").value.split("x").map(Number);
+  exporting = true; cancelExport = false;
+  playback.pause(); $("b-play").textContent = "▶";
+  $("busy").hidden = false;
+  $("busy").querySelector(".bar").hidden = false;
+  $("busy-cancel").hidden = false;
+  $("busy-cancel").onclick = () => { cancelExport = true; };
+  $("b-export").classList.add("busy");
+  try {
+    if (typeof VideoEncoder === "undefined") throw new Error("no-webcodecs");
+    const { blob, videoCodec, audioCodec } = await exportMP4({
+      engine, project, analysis, audioBuffer,
+      width, height, fps: 30, quality: 70, durationS: playback.duration,
+      shouldCancel: () => cancelExport,
+      onProgress: p => {
+        $("busy-fill").style.width = (p.frame / p.total * 100) + "%";
+        $("busy-msg").textContent = p.stage === "mux" ? "Muxing…"
+          : `Rendering ${p.frame}/${p.total} · ${p.fps.toFixed(0)} fps`;
+      },
+    });
+    save(blob, `${project.name}.mp4`);
+    toast(`MP4 saved — ${(blob.size / 1e6).toFixed(1)} MB (${videoCodec === "avc" ? "H.264" : "VP9"} + ${audioCodec})`, 5000);
+  } catch (err) {
+    if (err.message === "cancelled") toast("Export cancelled");
+    else if (err.message === "no-webcodecs") await webmFallback();
+    else toast("Export failed: " + err.message, 5000);
+  }
+  $("busy").hidden = true;
+  $("busy").querySelector(".bar").hidden = true;
+  $("busy-cancel").hidden = true;
+  $("b-export").classList.remove("busy");
+  exporting = false;
+});
+
+// realtime WebM capture for browsers without WebCodecs (older iOS)
+function webmFallback() {
+  return new Promise(resolve => {
+    toast("No MP4 encoder here — recording WebM in realtime");
+    playback.seek(0); playback.play();
+    const rec = exportWebM({
+      canvas: stage, audioEngine: playback,
+      onDone: blob => { save(blob, `${project.name}.webm`); resolve(); },
+    });
+    (function watch() {
+      $("busy-fill").style.width = (playback.t / playback.duration * 100) + "%";
+      $("busy-msg").textContent = `Recording ${playback.t.toFixed(0)}s / ${playback.duration.toFixed(0)}s`;
+      if (playback.playing && !cancelExport) requestAnimationFrame(watch);
+      else { playback.pause(); rec.stop(); }
+    })();
+  });
+}
+
+function save(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+// ---- render loop: same engine.render as desktop preview and export ----
+function frame() {
+  requestAnimationFrame(frame);
+  if (!project) return;
+  const t = playback.t;
+  engine.render(project, analysis, t, ctx, stage.width, stage.height);
+  const sec = analysis ? sectionAt(analysis.sections, t) : null;
+  $("h-sec").textContent = sec ? (SECTION_LABELS[sec.type] || sec.type) : "—";
+}
+frame();
+
+// expose for tests
+window.__poopdog = { get project() { return project; }, get analysis() { return analysis; }, playback, engine };
+</script>
+</body>
+</html>
