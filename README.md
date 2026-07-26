@@ -22,6 +22,13 @@ python3 -m http.server 8000
 
 Or just open `index.html` in Chrome/Edge/Firefox.
 
+**On a phone?** Open `mobile.html` — a condensed single-file build of the
+same engine with a touch-first UI: full-screen visuals, a thumb-friendly
+control sheet (play / Auto Show / record, scene + palette pickers, seekable
+section timeline), safe-area-aware layout, and tap-anywhere to hide the
+controls for a clean full-screen show. Recording prefers MP4 where the
+browser supports it (iOS Safari), falling back to WebM.
+
 ## How it works
 
 ```

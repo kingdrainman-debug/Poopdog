@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>Poopdog Mobile — Rave Visuals</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root { --accent: #c8ff00; --panel: rgba(14,14,22,.92); --dim: #8888a0; }
+html, body { height: 100%; overflow: hidden; background: #000; font-family: system-ui, sans-serif; color: #e8e8f0; }
+body { touch-action: none; }
+
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* drop-in screen */
+#start {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: radial-gradient(ellipse at center, #14141f 0%, #060609 100%);
+  text-align: center; padding: 24px;
+}
+#start[hidden] { display: none; }
+#start .icon { font-size: 52px; }
+#start h1 { font-size: 22px; letter-spacing: 2px; }
+#start h1 b { color: var(--accent); }
+#start p { color: var(--dim); font-size: 13px; line-height: 1.5; }
+#start button {
+  margin-top: 8px; padding: 14px 30px; font-size: 16px; font-weight: 700;
+  background: var(--accent); color: #000; border: 0; border-radius: 999px;
+}
+
+#busy {
+  position: fixed; inset: 0; z-index: 11; background: rgba(4,4,8,.88);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+#busy[hidden] { display: none; }
+.spin { width: 38px; height: 38px; border-radius: 50%; border: 3px solid #2a2a3c; border-top-color: var(--accent); animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+#busy div:last-child { font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+
+/* HUD chip */
+#hud {
+  position: fixed; top: calc(env(safe-area-inset-top) + 10px); left: 12px; z-index: 5;
+  font-size: 11px; letter-spacing: 1px; background: rgba(0,0,0,.5);
+  padding: 5px 10px; border-radius: 999px; pointer-events: none;
+  transition: opacity .3s;
+}
+#hud b { color: var(--accent); }
+#hud[hidden] { display: none; }
+
+/* bottom control sheet */
+#ui {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 6;
+  background: var(--panel); backdrop-filter: blur(8px);
+  padding: 8px 12px calc(env(safe-area-inset-bottom) + 10px);
+  transition: transform .25s, opacity .25s;
+}
+#ui[hidden] { display: none; }
+#ui.tucked { transform: translateY(100%); opacity: 0; pointer-events: none; }
+
+#scrub { width: 100%; height: 34px; display: block; border-radius: 6px; }
+
+.row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.row .grow { flex: 1; }
+button.ctl {
+  background: #22222f; color: #e8e8f0; border: 0; border-radius: 10px;
+  padding: 11px 0; font-size: 14px; flex: 1;
+}
+button.ctl:active { background: #33334a; }
+#b-play { flex: 0 0 54px; font-size: 17px; background: var(--accent); color: #000; font-weight: 700; }
+#b-auto { font-weight: 700; }
+#b-auto.on { background: var(--accent); color: #000; }
+#b-rec.recording { background: #ff3030; color: #fff; animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+select {
+  flex: 1; background: #22222f; color: #e8e8f0; border: 0; border-radius: 10px;
+  padding: 10px 8px; font-size: 13px; appearance: none; text-align: center;
+}
+#hint {
+  position: fixed; bottom: calc(env(safe-area-inset-bottom) + 8px); left: 0; right: 0; z-index: 4;
+  text-align: center; font-size: 11px; color: rgba(255,255,255,.45); pointer-events: none;
+  transition: opacity .3s;
+}
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="start">
+  <div class="icon">🌀</div>
+  <h1><b>POOPDOG</b> RAVE ENGINE</h1>
+  <p>Pick a DJ mix — BPM, beats, drops &amp; energy are detected,<br>then a synced visual show plays automatically.</p>
+  <button id="b-open">Pick audio file</button>
+  <input type="file" id="file" accept="audio/*" hidden>
+</div>
+
+<div id="busy" hidden><div class="spin"></div><div id="busy-msg">Analysing…</div></div>
+
+<div id="hud" hidden><b id="h-bpm">—</b> · <span id="h-sec">—</span></div>
+<div id="hint" hidden>tap visuals to hide controls</div>
+
+<div id="ui" hidden>
+  <canvas id="scrub"></canvas>
+  <div class="row">
+    <button class="ctl" id="b-play">▶</button>
+    <button class="ctl" id="b-auto">⚡ Auto Show</button>
+    <button class="ctl" id="b-rec">⏺ Rec</button>
+  </div>
+  <div class="row">
+    <select id="s-scene">
+      <option value="auto" selected>Scene: Auto</option>
+      <option value="lasers">Lasers</option>
+      <option value="tunnel">Tunnel</option>
+      <option value="particles">Particles</option>
+      <option value="strobe">Strobe</option>
+    </select>
+    <select id="s-pal"></select>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ===== Poopdog mobile — condensed single-file build of the rave engine =====
+
+// ---- palettes ----
+const PALETTES = {
+  cyberpunk: { label: "Cyberpunk", colors: [[315,100,60],[185,100,55],[265,100,65],[55,100,60]], strobe: [185,100,85], bg: [255,60,4] },
+  synthwave: { label: "Synthwave", colors: [[300,100,62],[200,100,60],[260,90,62],[330,100,65]], strobe: [300,100,88], bg: [270,55,5] },
+  hardstyle: { label: "Hardstyle", colors: [[0,100,55],[45,100,55],[0,0,95],[15,100,60]], strobe: [0,0,100], bg: [0,45,4] },
+  techno:    { label: "Techno", colors: [[0,0,92],[210,15,70],[0,0,60],[200,30,80]], strobe: [0,0,100], bg: [220,15,3] },
+  psytrance: { label: "Psytrance", colors: [[120,100,55],[280,100,60],[30,100,55],[180,100,55]], strobe: [120,100,85], bg: [280,50,4] },
+  trance:    { label: "Trance", colors: [[210,100,60],[180,100,60],[240,90,65],[195,100,70]], strobe: [200,100,90], bg: [220,60,5] },
+  dnb:       { label: "Drum & Bass", colors: [[25,100,55],[55,100,55],[0,90,55],[40,100,65]], strobe: [45,100,85], bg: [20,40,4] },
+  acid:      { label: "Acid", colors: [[75,100,55],[60,100,50],[90,100,60],[50,100,55]], strobe: [70,100,85], bg: [90,50,3] },
+  neon:      { label: "Neon", colors: [[320,100,60],[160,100,55],[45,100,58],[210,100,60]], strobe: [0,0,100], bg: [260,40,4] },
+  blacklight:{ label: "Blacklight", colors: [[265,100,62],[285,100,58],[245,100,65],[300,90,60]], strobe: [270,100,88], bg: [265,70,4] },
+};
+
+// ---- offline analysis: energy envelope, BPM, sections ----
+function analyzeTrack(buffer, onProgress) {
+  const sr = buffer.sampleRate, n = buffer.length;
+  const mono = new Float32Array(n);
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    const d = buffer.getChannelData(c);
+    for (let i = 0; i < n; i++) mono[i] += d[i] / buffer.numberOfChannels;
+  }
+  const hop = 1024, frames = Math.floor(n / hop), frameDur = hop / sr;
+  const rms = new Float32Array(frames);
+  for (let f = 0; f < frames; f++) {
+    let s = 0; const o = f * hop;
+    for (let i = 0; i < hop; i++) { const v = mono[o + i]; s += v * v; }
+    rms[f] = Math.sqrt(s / hop);
+  }
+  const onset = new Float32Array(frames);
+  for (let f = 1; f < frames; f++) onset[f] = Math.max(0, rms[f] - rms[f - 1]);
+
+  if (onProgress) onProgress("Detecting BPM…");
+  const len = Math.min(frames, Math.round(90 / frameDur));
+  const minLag = Math.round(60 / (180 * frameDur)), maxLag = Math.round(60 / (80 * frameDur));
+  let bestLag = minLag, bestScore = -1;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let sc = 0;
+    for (let i = 0; i < len - lag; i++) sc += onset[i] * onset[i + lag];
+    sc *= 1 + (maxLag - lag) / maxLag * 0.08;
+    if (sc > bestScore) { bestScore = sc; bestLag = lag; }
+  }
+  const bpm = Math.round(60 / (bestLag * frameDur) * 10) / 10;
+
+  if (onProgress) onProgress("Finding drops…");
+  // 1s-smoothed, normalised energy
+  const win = Math.max(1, Math.round(1 / frameDur));
+  const energy = new Float32Array(frames);
+  let sum = 0;
+  for (let i = 0; i < frames; i++) {
+    sum += rms[i]; if (i >= win) sum -= rms[i - win];
+    energy[i] = sum / Math.min(i + 1, win);
+  }
+  const peak = Math.max(...energy) || 1;
+  for (let i = 0; i < frames; i++) energy[i] /= peak;
+
+  const sections = detectSections(energy, frameDur, frames * frameDur);
+  return { bpm, energy, frameDur, sections };
+}
+
+function detectSections(energy, frameDur, duration) {
+  const bf = Math.round(1 / frameDur), nB = Math.ceil(energy.length / bf);
+  const bE = new Float32Array(nB);
+  for (let b = 0; b < nB; b++) {
+    let s = 0, c = 0;
+    for (let f = b * bf; f < Math.min(energy.length, (b + 1) * bf); f++) { s += energy[f]; c++; }
+    bE[b] = c ? s / c : 0;
+  }
+  const sorted = Array.from(bE).sort((a, b) => a - b);
+  const q = p => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))];
+  const hi = q(0.65), lo = q(0.30);
+  const labels = Array.from(bE, e => e >= hi ? "high" : e <= lo ? "low" : "mid");
+  let runs = [];
+  for (let b = 0; b < nB; b++) {
+    if (runs.length && runs[runs.length - 1].label === labels[b]) runs[runs.length - 1].len++;
+    else runs.push({ label: labels[b], start: b, len: 1 });
+  }
+  runs = runs.filter(r => r.len >= 4 || runs.length === 1);
+  if (!runs.length) runs.push({ label: "mid", start: 0, len: nB });
+  runs[0].start = 0;
+  for (let i = 0; i < runs.length; i++) {
+    const end = i + 1 < runs.length ? runs[i + 1].start : nB;
+    runs[i].len = end - runs[i].start;
+  }
+  const sections = [];
+  let seenHigh = false;
+  for (let i = 0; i < runs.length; i++) {
+    const r = runs[i], start = r.start, end = Math.min(duration, r.start + r.len);
+    let type;
+    if (r.label === "high") { type = "drop"; seenHigh = true; }
+    else if (r.label === "low") type = i === 0 ? "intro" : i === runs.length - 1 ? "outro" : seenHigh ? "breakdown" : "intro";
+    else type = runs[i + 1] && runs[i + 1].label === "high" ? "build" : "groove";
+    sections.push({ start, end, type });
+  }
+  return sections.length ? sections : [{ start: 0, end: duration, type: "groove" }];
+}
+
+// ---- audio engine: playback + realtime features ----
+class AudioEngine {
+  constructor() {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 2048;
+    this.analyser.smoothingTimeConstant = 0.5;
+    this.master = this.ctx.createGain();
+    this.master.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
+    this.streamDest = this.ctx.createMediaStreamDestination();
+    this.master.connect(this.streamDest);
+    this.freq = new Uint8Array(this.analyser.frequencyBinCount);
+    this.buffer = null; this.source = null; this.playing = false;
+    this.startedAt = 0; this.offset = 0;
+    this.f = { bass: 0, mids: 0, highs: 0, loudness: 0, kick: false, snare: false, kickEnv: 0, snareEnv: 0 };
+    this._bh = new Float32Array(43); this._mh = new Float32Array(43); this._hi = 0;
+    this._lk = 0; this._ls = 0;
+  }
+  async load(ab) { this.stop(); this.buffer = await this.ctx.decodeAudioData(ab); this.offset = 0; }
+  get duration() { return this.buffer ? this.buffer.duration : 0; }
+  get currentTime() {
+    if (!this.buffer) return 0;
+    return this.playing ? Math.min(this.offset + this.ctx.currentTime - this.startedAt, this.duration) : this.offset;
+  }
+  play() {
+    if (!this.buffer || this.playing) return;
+    this.ctx.resume();
+    this.source = this.ctx.createBufferSource();
+    this.source.buffer = this.buffer;
+    this.source.connect(this.master);
+    this.source.onended = () => {
+      if (this.playing && this.currentTime >= this.duration - 0.05) {
+        this.playing = false; this.offset = 0;
+        if (this.onEnded) this.onEnded();
+      }
+    };
+    this.source.start(0, this.offset);
+    this.startedAt = this.ctx.currentTime;
+    this.playing = true;
+  }
+  pause() { if (!this.playing) return; this.offset = this.currentTime; this._kill(); this.playing = false; }
+  stop() { this._kill(); this.playing = false; this.offset = 0; }
+  seek(t) {
+    const was = this.playing;
+    if (was) this._kill();
+    this.playing = false;
+    this.offset = Math.max(0, Math.min(t, this.duration));
+    if (was) this.play();
+  }
+  _kill() {
+    if (this.source) {
+      this.source.onended = null;
+      try { this.source.stop(); } catch (e) {}
+      this.source.disconnect(); this.source = null;
+    }
+  }
+  update() {
+    const f = this.f;
+    f.kick = false; f.snare = false;
+    this.analyser.getByteFrequencyData(this.freq);
+    const binHz = this.ctx.sampleRate / this.analyser.fftSize, bins = this.freq;
+    const avg = (a, b) => {
+      const lo = Math.max(0, Math.floor(a / binHz)), hi = Math.min(bins.length - 1, Math.ceil(b / binHz));
+      let s = 0; for (let i = lo; i <= hi; i++) s += bins[i];
+      return s / ((hi - lo + 1) * 255);
+    };
+    const bass = avg(30, 150), mids = avg(400, 2500), highs = avg(4000, 12000), loud = avg(30, 14000);
+    const sm = (p, n) => n > p ? p + (n - p) * 0.55 : p + (n - p) * 0.12;
+    f.bass = sm(f.bass, bass); f.mids = sm(f.mids, mids); f.highs = sm(f.highs, highs); f.loudness = sm(f.loudness, loud);
+    let ba = 0, ma = 0;
+    for (let i = 0; i < 43; i++) { ba += this._bh[i]; ma += this._mh[i]; }
+    ba /= 43; ma /= 43;
+    const now = this.ctx.currentTime;
+    if (this.playing) {
+      if (bass > ba * 1.3 && bass > 0.15 && now - this._lk > 0.18) { f.kick = true; f.kickEnv = 1; this._lk = now; }
+      if (mids > ma * 1.45 && mids > 0.12 && now - this._ls > 0.22) { f.snare = true; f.snareEnv = 1; this._ls = now; }
+    }
+    this._bh[this._hi] = bass; this._mh[this._hi] = mids; this._hi = (this._hi + 1) % 43;
+    f.kickEnv *= 0.90; f.snareEnv *= 0.88;
+    return f;
+  }
+}
+
+// ---- show director ----
+const POOLS = {
+  intro: [{ scene: "tunnel", tunnelType: "neon", intensity: .4, strobeAmt: 0, speed: .5 },
+          { scene: "particles", intensity: .35, strobeAmt: 0, speed: .4 }],
+  build: [{ scene: "tunnel", tunnelType: "grid", intensity: .7, strobeAmt: .25, speed: 1.1 },
+          { scene: "lasers", laserMode: "circle", intensity: .65, strobeAmt: .2, speed: 1 },
+          { scene: "tunnel", tunnelType: "hex", intensity: .7, strobeAmt: .3, speed: 1.2 }],
+  drop: [{ scene: "lasers", laserMode: "fan", intensity: 1, strobeAmt: .8, speed: 1.6 },
+         { scene: "lasers", laserMode: "burst", intensity: 1, strobeAmt: .9, speed: 1.7 },
+         { scene: "tunnel", tunnelType: "grid", intensity: 1, strobeAmt: .7, speed: 2 },
+         { scene: "lasers", laserMode: "cross", intensity: .95, strobeAmt: .8, speed: 1.5 },
+         { scene: "strobe", intensity: 1, strobeAmt: 1, speed: 1.5 }],
+  breakdown: [{ scene: "particles", intensity: .45, strobeAmt: .05, speed: .5 },
+              { scene: "lasers", laserMode: "spiral", intensity: .5, strobeAmt: .1, speed: .6 }],
+  groove: [{ scene: "tunnel", tunnelType: "hex", intensity: .7, strobeAmt: .35, speed: 1 },
+           { scene: "lasers", laserMode: "circle", intensity: .7, strobeAmt: .35, speed: 1 },
+           { scene: "tunnel", tunnelType: "neon", intensity: .75, strobeAmt: .4, speed: 1.1 }],
+  outro: [{ scene: "particles", intensity: .35, strobeAmt: 0, speed: .4 }],
+};
+function generateShow(sections) {
+  const c = {};
+  return sections.map(sec => {
+    const pool = POOLS[sec.type] || POOLS.groove;
+    const i = c[sec.type] = (c[sec.type] ?? -1) + 1;
+    return { start: sec.start, end: sec.end, type: sec.type, ...pool[i % pool.length] };
+  });
+}
+const cueAt = (cues, t) => cues.find(c => t >= c.start && t < c.end) || cues[cues.length - 1] || null;
+
+// ---- visual engine (condensed: lasers, tunnel, particles, strobe) ----
+class VisualEngine {
+  constructor(canvas) {
+    this.canvas = canvas; this.ctx = canvas.getContext("2d");
+    this.t = 0; this.hue = 0; this.z = 0; this.rot = 0; this.flash = 0;
+    this.parts = []; this.last = performance.now();
+  }
+  color(s, i, a = 1, boost = 0) {
+    const c = PALETTES[s.palette].colors[i % 4];
+    return `hsla(${(c[0] + this.hue) % 360},${c[1]}%,${Math.min(100, c[2] + boost)}%,${a})`;
+  }
+  render(scene, f, s, bpm) {
+    const now = performance.now(), dt = Math.min(0.05, (now - this.last) / 1000);
+    this.last = now; this.t += dt * s.speed;
+    const ctx = this.ctx, w = this.canvas.width, h = this.canvas.height;
+    if (f.snare) this.hue = (this.hue + 25) % 360;
+    this.hue = (this.hue + dt * 4) % 360;
+    this.z += dt * s.speed * (bpm / 120) * (1 + f.kickEnv * 2);
+    this.rot += dt * s.speed * 0.3 * (0.3 + f.kickEnv * 2);
+    if (f.kick && s.strobeAmt > 0.01) this.flash = Math.max(this.flash, s.strobeAmt * s.intensity);
+    this.flash *= 0.72;
+
+    const pal = PALETTES[s.palette];
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = `hsla(${pal.bg[0]},${pal.bg[1]}%,${pal.bg[2]}%,${1 - s.glow * 0.55})`;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.save();
+    const shake = s.shakeAmt * (f.kickEnv * 14 + f.bass * 4);
+    if (shake > 0.3) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+    const zoom = 1 + f.bass * 0.05 * s.shakeAmt;
+    ctx.translate(w / 2, h / 2); ctx.scale(zoom, zoom); ctx.translate(-w / 2, -h / 2);
+    ctx.globalCompositeOperation = "lighter";
+    if (scene === "lasers") this.lasers(ctx, w, h, f, s);
+    else if (scene === "tunnel") this.tunnel(ctx, w, h, f, s);
+    else if (scene === "particles") this.particles(ctx, w, h, f, s, dt);
+    else if (scene === "strobe") this.strobe(ctx, w, h, f, s);
+    ctx.restore();
+
+    if (this.flash > 0.01) {
+      ctx.globalCompositeOperation = "source-over";
+      const sc = pal.strobe;
+      ctx.fillStyle = `hsla(${sc[0]},${sc[1]}%,${sc[2]}%,${this.flash * 0.4})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    ctx.globalCompositeOperation = "source-over";
+  }
+  stroke(ctx, s, i, wd, a) {
+    ctx.strokeStyle = this.color(s, i, a, 10);
+    ctx.lineWidth = wd;
+    ctx.shadowBlur = 10 + s.glow * 18;
+    ctx.shadowColor = this.color(s, i, .8);
+  }
+  lasers(ctx, w, h, f, s) {
+    const mode = s.laserMode, wd = 1.5 + f.bass * 8 * s.intensity, a = .35 + f.loudness * .6, n = 6;
+    ctx.save(); ctx.lineCap = "round";
+    if (mode === "cross") {
+      for (let i = 0; i < n; i++) {
+        const p = (i + 1) / (n + 1), sw = Math.sin(this.t * 1.5 + i * 1.7) * 30 * s.intensity;
+        this.stroke(ctx, s, i, wd, a);
+        ctx.beginPath(); ctx.moveTo(0, p * h + sw); ctx.lineTo(w, p * h - sw); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(p * w + sw, 0); ctx.lineTo(p * w - sw, h); ctx.stroke();
+      }
+    } else if (mode === "fan") {
+      for (const [ox, dir] of [[0, 1], [w, -1]]) {
+        for (let i = 0; i < n; i++) {
+          const ang = -Math.PI / 2 + dir * (Math.sin(this.rot + i * .35) * (0.9 + f.kickEnv * .5) * .5 + .35);
+          this.stroke(ctx, s, i, wd, a);
+          ctx.beginPath(); ctx.moveTo(ox, h);
+          ctx.lineTo(ox + Math.cos(ang) * h * 1.8, h + Math.sin(ang) * h * 1.8);
+          ctx.stroke();
+        }
+      }
+    } else if (mode === "circle") {
+      for (let i = 0; i < n; i++) {
+        const r = (i + 1) / n * Math.min(w, h) * .45 * (1 + f.kickEnv * .25);
+        this.stroke(ctx, s, i, wd, a);
+        ctx.beginPath(); ctx.arc(w / 2, h / 2, r, this.rot + i, this.rot + i + Math.PI * 1.4); ctx.stroke();
+      }
+    } else if (mode === "spiral") {
+      for (let arm = 0; arm < 3; arm++) {
+        this.stroke(ctx, s, arm, wd, a);
+        ctx.beginPath();
+        for (let i = 0; i <= 60; i++) {
+          const p = i / 60, ang = this.rot * 2 + arm * 2.09 + p * Math.PI * 5;
+          const r = p * Math.min(w, h) * .55 * (1 + f.bass * .3);
+          const x = w / 2 + Math.cos(ang) * r, y = h / 2 + Math.sin(ang) * r;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    } else { // burst
+      const count = Math.round(4 + f.kickEnv * 12);
+      for (let i = 0; i < count; i++) {
+        const ang = (i / count) * Math.PI * 2 + this.rot * 3 + Math.sin(i * 13.7) * .6;
+        this.stroke(ctx, s, i, wd * (.5 + Math.random() * .8), a * (.5 + f.kickEnv));
+        ctx.beginPath(); ctx.moveTo(w / 2, h / 2);
+        ctx.lineTo(w / 2 + Math.cos(ang) * h, h / 2 + Math.sin(ang) * h);
+        ctx.stroke();
+      }
+    }
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+  tunnel(ctx, w, h, f, s) {
+    const type = s.tunnelType;
+    const cx = w / 2 + Math.sin(this.t * .4) * w * .05, cy = h / 2 + Math.cos(this.t * .31) * h * .05;
+    const maxR = Math.hypot(w, h) * .6;
+    ctx.save();
+    for (let i = 0; i < 12; i++) {
+      const depth = ((i / 12) + this.z * .22) % 1;
+      const r = Math.pow(depth, 2.4) * maxR * (1 + f.kickEnv * .15);
+      if (r < 2) continue;
+      const a = Math.min(.85, depth * 1.1) * (.45 + f.loudness * .55);
+      const lw = 1 + depth * (3 + f.bass * 6);
+      ctx.strokeStyle = this.color(s, i, a, depth * 15);
+      ctx.lineWidth = lw;
+      ctx.shadowBlur = s.glow * 16 * depth;
+      ctx.shadowColor = this.color(s, i, .8);
+      const tw = this.rot + depth * 1.5;
+      ctx.beginPath();
+      if (type === "neon") ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      else {
+        const sides = type === "hex" ? 6 : 4;
+        const rot = type === "grid" ? Math.PI / 4 : tw;
+        for (let k = 0; k <= sides; k++) {
+          const ang = rot + (k / sides) * Math.PI * 2;
+          const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+          k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+      }
+      ctx.stroke();
+    }
+    if (type === "grid") {
+      ctx.strokeStyle = this.color(s, 1, .25 + f.bass * .3);
+      ctx.lineWidth = 1.5; ctx.shadowBlur = 0;
+      for (let d = 0; d < 8; d++) {
+        const ang = d / 8 * Math.PI * 2 + Math.PI / 4;
+        ctx.beginPath(); ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(ang) * maxR, cy + Math.sin(ang) * maxR);
+        ctx.stroke();
+      }
+    }
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+  particles(ctx, w, h, f, s, dt) {
+    const spawn = Math.round(2 + f.loudness * 5 + (f.kick ? 22 : 0));
+    for (let i = 0; i < spawn && this.parts.length < 500; i++) {
+      const ang = Math.random() * Math.PI * 2, sp = 30 + Math.random() * 110 + f.kickEnv * 300;
+      this.parts.push({
+        x: w / 2 + (Math.random() - .5) * w * .2, y: h / 2 + (Math.random() - .5) * h * .2,
+        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+        life: 1, dk: .25 + Math.random() * .5, sz: 1.5 + Math.random() * 3, ci: (Math.random() * 4) | 0,
+      });
+    }
+    ctx.save();
+    for (let i = this.parts.length - 1; i >= 0; i--) {
+      const p = this.parts[i];
+      p.life -= p.dk * dt;
+      if (p.life <= 0) { this.parts.splice(i, 1); continue; }
+      p.x += p.vx * dt * s.speed; p.y += p.vy * dt * s.speed;
+      ctx.fillStyle = this.color(s, p.ci, p.life * .9, f.highs * 30);
+      ctx.shadowBlur = s.glow * 10;
+      ctx.shadowColor = this.color(s, p.ci, .8);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, Math.max(.4, p.sz * (.5 + f.bass) * p.life), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0; ctx.restore();
+  }
+  strobe(ctx, w, h, f, s) {
+    if (f.kick) this.flash = Math.max(this.flash, .9 * s.intensity);
+    for (let i = 0; i < 6; i++) {
+      const y = ((i / 6) + this.t * .25) % 1 * h;
+      ctx.fillStyle = this.color(s, i, .1 + f.loudness * .25);
+      ctx.fillRect(0, y, w, h / 6 * .45);
+    }
+    if (f.snareEnv > .05) {
+      ctx.strokeStyle = this.color(s, 2, f.snareEnv * .9, 20);
+      ctx.lineWidth = 3 + f.snareEnv * 10;
+      ctx.beginPath();
+      ctx.arc(w / 2, h / 2, (1 - f.snareEnv) * Math.min(w, h) * .5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+}
+
+// ===== app wiring =====
+const $ = id => document.getElementById(id);
+const stage = $("stage");
+const audio = new AudioEngine();
+const visuals = new VisualEngine(stage);
+let analysis = null, cues = [], lastCue = null;
+let recorder = null, recChunks = [];
+
+const settings = { palette: "cyberpunk", laserMode: "fan", tunnelType: "neon", glow: .7, speed: 1, strobeAmt: .5, shakeAmt: .6, intensity: .8 };
+
+// size canvas to viewport (dpr-capped for mobile GPU)
+function fit() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  stage.width = Math.round(innerWidth * dpr);
+  stage.height = Math.round(innerHeight * dpr);
+}
+fit();
+addEventListener("resize", fit);
+
+for (const [k, p] of Object.entries(PALETTES)) {
+  const o = document.createElement("option");
+  o.value = k; o.textContent = p.label;
+  $("s-pal").appendChild(o);
+}
+const SECT = { intro: "Intro", build: "Build-up", drop: "DROP", breakdown: "Breakdown", groove: "Groove", outro: "Outro" };
+const TL_COL = { intro: "#3a3a55", build: "#c8a000", drop: "#ff2d95", breakdown: "#2a7a8c", groove: "#5a5a8c", outro: "#3a3a55" };
+const AUTO_PAL = {
+  drop: ["hardstyle", "neon", "cyberpunk", "acid"], build: ["synthwave", "trance"],
+  breakdown: ["blacklight", "trance"], intro: ["techno"], outro: ["techno"],
+  groove: ["cyberpunk", "psytrance", "dnb", "synthwave"],
+};
+
+// ---- load ----
+async function loadFile(file) {
+  $("start").hidden = true; $("busy").hidden = false;
+  try {
+    $("busy-msg").textContent = "Decoding…";
+    await audio.load(await file.arrayBuffer());
+    await new Promise(r => setTimeout(r, 50));
+    analysis = analyzeTrack(audio.buffer, m => { $("busy-msg").textContent = m; });
+    cues = generateShow(analysis.sections);
+    $("h-bpm").textContent = analysis.bpm + " BPM";
+    $("busy").hidden = true;
+    $("hud").hidden = false; $("ui").hidden = false; $("hint").hidden = false;
+    setTimeout(() => { $("hint").style.opacity = 0; }, 4000);
+    drawScrub();
+    audio.play();
+    $("b-play").textContent = "⏸";
+    $("b-auto").classList.add("on");
+  } catch (e) {
+    $("busy").hidden = true; $("start").hidden = false;
+    alert("Could not load: " + e.message);
+  }
+}
+$("b-open").addEventListener("click", () => $("file").click());
+$("file").addEventListener("change", e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+// ---- transport ----
+$("b-play").addEventListener("click", () => {
+  if (!audio.buffer) return;
+  if (audio.playing) { audio.pause(); $("b-play").textContent = "▶"; }
+  else { audio.play(); $("b-play").textContent = "⏸"; }
+});
+audio.onEnded = () => { $("b-play").textContent = "▶"; if (recorder) stopRec(); };
+
+$("b-auto").addEventListener("click", () => {
+  $("s-scene").value = "auto";
+  $("b-auto").classList.add("on");
+  cues = generateShow(analysis.sections);
+  audio.seek(0); audio.play();
+  $("b-play").textContent = "⏸";
+});
+$("s-scene").addEventListener("change", () => {
+  $("b-auto").classList.toggle("on", $("s-scene").value === "auto");
+});
+$("s-pal").addEventListener("change", e => { settings.palette = e.target.value; });
+
+// tap visuals to tuck/show controls
+stage.addEventListener("pointerdown", () => {
+  if (!audio.buffer) return;
+  $("ui").classList.toggle("tucked");
+  $("hud").style.opacity = $("ui").classList.contains("tucked") ? 0 : 1;
+});
+
+// ---- scrubber (timeline + seek) ----
+const scrub = $("scrub");
+function drawScrub() {
+  const r = scrub.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  scrub.width = r.width * dpr; scrub.height = 34 * dpr;
+  const c = scrub.getContext("2d"), w = scrub.width, h = scrub.height;
+  c.clearRect(0, 0, w, h);
+  if (!analysis) return;
+  const dur = audio.duration;
+  for (const s of analysis.sections) {
+    c.fillStyle = TL_COL[s.type] || "#444";
+    c.globalAlpha = .55;
+    c.fillRect(s.start / dur * w, 0, (s.end - s.start) / dur * w, h);
+  }
+  c.globalAlpha = 1;
+  c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = dpr;
+  c.beginPath();
+  for (let x = 0; x < w; x++) {
+    const idx = Math.min(analysis.energy.length - 1, (x / w * analysis.energy.length) | 0);
+    const y = h - analysis.energy[idx] * (h - 4) - 2;
+    x === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
+  }
+  c.stroke();
+}
+addEventListener("resize", () => setTimeout(drawScrub, 100));
+scrub.addEventListener("pointerdown", e => {
+  if (!audio.buffer) return;
+  const r = scrub.getBoundingClientRect();
+  audio.seek((e.clientX - r.left) / r.width * audio.duration);
+  if (audio.playing) $("b-play").textContent = "⏸";
+});
+
+// ---- record/export ----
+function stopRec() { if (recorder && recorder.state !== "inactive") recorder.stop(); }
+$("b-rec").addEventListener("click", () => {
+  if (recorder && recorder.state === "recording") { stopRec(); return; }
+  if (!audio.buffer) return;
+  const stream = new MediaStream([
+    ...stage.captureStream(30).getVideoTracks(),
+    ...audio.streamDest.stream.getAudioTracks(),
+  ]);
+  const mime = ["video/mp4", "video/webm;codecs=vp9,opus", "video/webm"].find(m => MediaRecorder.isTypeSupported(m)) || "";
+  recChunks = [];
+  recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+  recorder.ondataavailable = e => { if (e.data.size) recChunks.push(e.data); };
+  recorder.onstop = () => {
+    const ext = mime.startsWith("video/mp4") ? "mp4" : "webm";
+    const blob = new Blob(recChunks, { type: mime || "video/webm" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "poopdog-visuals." + ext; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    $("b-rec").textContent = "⏺ Rec";
+    $("b-rec").classList.remove("recording");
+    recorder = null;
+  };
+  audio.seek(0); audio.play();
+  $("b-play").textContent = "⏸";
+  recorder.start(250);
+  $("b-rec").textContent = "⏹ Save";
+  $("b-rec").classList.add("recording");
+});
+
+// ---- render loop ----
+function frame() {
+  requestAnimationFrame(frame);
+  const f = audio.update();
+  const t = audio.currentTime;
+  let scene = $("s-scene").value;
+  const active = { ...settings };
+  if (scene === "auto" && cues.length) {
+    const cue = cueAt(cues, t);
+    if (cue) {
+      scene = cue.scene;
+      if (cue.laserMode) active.laserMode = cue.laserMode;
+      if (cue.tunnelType) active.tunnelType = cue.tunnelType;
+      active.intensity = cue.intensity;
+      active.strobeAmt = cue.strobeAmt;
+      active.speed = cue.speed;
+      if (cue !== lastCue) {
+        if (lastCue) visuals.flash = Math.max(visuals.flash, .8);
+        const pals = AUTO_PAL[cue.type] || AUTO_PAL.groove;
+        active.palette = settings.palette = pals[Math.floor(cue.start) % pals.length];
+        $("s-pal").value = settings.palette;
+        lastCue = cue;
+      } else active.palette = settings.palette;
+      $("h-sec").textContent = SECT[cue.type] || cue.type;
+    }
+  } else if (analysis) {
+    const sec = analysis.sections.find(s => t >= s.start && t < s.end);
+    $("h-sec").textContent = sec ? SECT[sec.type] : "—";
+  }
+  visuals.render(scene, f, active, analysis ? analysis.bpm : 120);
+}
+frame();
+</script>
+</body>
+</html>
