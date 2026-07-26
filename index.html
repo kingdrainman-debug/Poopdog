@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poopdog — Music-Aware Rave Visuals</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌀</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="logo">POOPDOG<span class="logo-sub">RAVE ENGINE</span></div>
+    <div class="topbar-actions">
+      <button id="btn-autoshow" class="btn btn-accent" disabled>⚡ Auto Show</button>
+      <button id="btn-export" class="btn" disabled>⏺ Export Video</button>
+    </div>
+  </header>
+
+  <main id="stage-wrap">
+    <canvas id="stage" width="1280" height="720"></canvas>
+
+    <div id="dropzone">
+      <div class="dropzone-inner">
+        <div class="dropzone-icon">🎵</div>
+        <h1>Drop a DJ mix</h1>
+        <p>MP3 / WAV / OGG — the engine analyses BPM, beats, drops &amp; energy,<br>
+           then generates a synced visual show in one click.</p>
+        <button id="btn-open" class="btn btn-accent">Choose audio file</button>
+        <input type="file" id="file-input" accept="audio/*" hidden>
+      </div>
+    </div>
+
+    <div id="analysis-overlay" hidden>
+      <div class="spinner"></div>
+      <div id="analysis-status">Analysing audio…</div>
+    </div>
+
+    <div id="hud" hidden>
+      <span id="hud-bpm">— BPM</span>
+      <span id="hud-section">—</span>
+      <span id="hud-scene">—</span>
+    </div>
+  </main>
+
+  <section id="timeline-wrap" hidden>
+    <canvas id="timeline" height="64"></canvas>
+    <div id="playhead"></div>
+  </section>
+
+  <footer id="controls" hidden>
+    <div class="ctrl-group">
+      <button id="btn-play" class="btn btn-round">▶</button>
+      <span id="time-display">0:00 / 0:00</span>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Scene
+        <select id="sel-scene">
+          <option value="auto" selected>Auto (director)</option>
+          <option value="lasers">Lasers</option>
+          <option value="tunnel">Tunnel</option>
+          <option value="particles">Particles</option>
+          <option value="strobe">Strobe</option>
+        </select>
+      </label>
+      <label>Laser mode
+        <select id="sel-laser">
+          <option value="fan">Fan</option>
+          <option value="horizontal">Horizontal</option>
+          <option value="vertical">Vertical</option>
+          <option value="cross">Cross</option>
+          <option value="circle">Circle</option>
+          <option value="spiral">Spiral</option>
+          <option value="burst">Random burst</option>
+        </select>
+      </label>
+      <label>Tunnel type
+        <select id="sel-tunnel">
+          <option value="neon">Neon rings</option>
+          <option value="hex">Hex</option>
+          <option value="wireframe">Wireframe</option>
+          <option value="grid">Grid</option>
+          <option value="particle">Particle</option>
+        </select>
+      </label>
+      <label>Palette
+        <select id="sel-palette"></select>
+      </label>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Beat sens.<input type="range" id="rng-sens" min="0.5" max="2.5" step="0.05" value="1.3"></label>
+      <label>Glow<input type="range" id="rng-glow" min="0" max="1" step="0.01" value="0.7"></label>
+      <label>Speed<input type="range" id="rng-speed" min="0.2" max="3" step="0.05" value="1"></label>
+      <label>Strobe<input type="range" id="rng-strobe" min="0" max="1" step="0.01" value="0.5"></label>
+      <label>Cam shake<input type="range" id="rng-shake" min="0" max="1" step="0.01" value="0.6"></label>
+    </div>
+  </footer>
+</div>
+
+<script src="js/palettes.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/visuals.js"></script>
+<script src="js/director.js"></script>
+<script src="js/export.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
