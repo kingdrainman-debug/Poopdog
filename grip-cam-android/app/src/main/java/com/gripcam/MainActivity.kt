@@ -2,6 +2,7 @@ package com.gripcam
 
 import android.graphics.Color
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.OrientationEventListener
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -50,6 +51,28 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // Volume buttons (and Bluetooth selfie remotes, which send volume-up) act as configured.
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (isVolumeKey(keyCode) && viewModel.onVolumeKey(keyCode == KeyEvent.KEYCODE_VOLUME_UP, true, event.repeatCount)) return true
+        if (keyCode == KeyEvent.KEYCODE_CAMERA && event.repeatCount == 0) {
+            viewModel.shutterDown()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        if (isVolumeKey(keyCode) && viewModel.onVolumeKey(keyCode == KeyEvent.KEYCODE_VOLUME_UP, false, 0)) return true
+        if (keyCode == KeyEvent.KEYCODE_CAMERA) {
+            viewModel.shutterUp()
+            return true
+        }
+        return super.onKeyUp(keyCode, event)
+    }
+
+    private fun isVolumeKey(keyCode: Int) =
+        keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 
     override fun onStart() {
         super.onStart()

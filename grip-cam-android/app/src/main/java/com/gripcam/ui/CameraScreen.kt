@@ -2,25 +2,29 @@ package com.gripcam.ui
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageCapture
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -32,7 +36,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -40,6 +43,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -50,15 +54,36 @@ import androidx.compose.material.icons.filled.BluetoothSearching
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Exposure
 import androidx.compose.material.icons.filled.FlashAuto
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.GridOff
+import androidx.compose.material.icons.filled.GridOn
+import androidx.compose.material.icons.filled.HdrOff
+import androidx.compose.material.icons.filled.HdrOn
+import androidx.compose.material.icons.filled.Nightlight
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Timer10
+import androidx.compose.material.icons.filled.Timer3
+import androidx.compose.material.icons.filled.TimerOff
+import androidx.compose.material.icons.filled.VideoStable
+import androidx.compose.material.icons.filled.WbAuto
+import androidx.compose.material.icons.filled.WbCloudy
+import androidx.compose.material.icons.filled.WbIncandescent
+import androidx.compose.material.icons.filled.WbIridescent
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -66,40 +91,52 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
-import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gripcam.DeviceStatus
+import com.gripcam.LastCapture
 import com.gripcam.MainViewModel
-import com.gripcam.camera.CameraController
 import com.gripcam.camera.CameraUiState
-import com.gripcam.camera.FocusUi
+import com.gripcam.camera.VideoMath
+import com.gripcam.camera.ZoomMath
 import com.gripcam.grip.GripStatus
+import com.gripcam.settings.AppSettings
+import com.gripcam.settings.FrameAspect
+import com.gripcam.settings.FrameRate
+import com.gripcam.settings.GridStyle
+import com.gripcam.settings.PhotoEnhancement
+import com.gripcam.settings.Prefs
+import com.gripcam.settings.SelfTimer
+import com.gripcam.settings.Stabilization
+import com.gripcam.settings.VideoResolution
+import com.gripcam.settings.WhiteBalance
 import kotlinx.coroutines.delay
 import java.util.Locale
-
-private val Scrim = Color.Black.copy(alpha = 0.55f)
-private val RecordRed = Color(0xFFFF3B30)
-private val FocusGreen = Color(0xFF4CD964)
+import kotlin.math.roundToInt
 
 @Composable
 fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> Unit) {
@@ -107,11 +144,15 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
     val grip by viewModel.gripStatus.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val log by viewModel.log.collectAsStateWithLifecycle()
+    val countdown by viewModel.countdown.collectAsStateWithLifecycle()
+    val lastCapture by viewModel.lastCapture.collectAsStateWithLifecycle()
+    val device by viewModel.deviceStatus.collectAsStateWithLifecycle()
     val iconTarget by viewModel.iconRotation.collectAsStateWithLifecycle()
     val iconRotation by animateFloatAsState(iconTarget, tween(300), label = "iconRotation")
 
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var helpDismissed by rememberSaveable { mutableStateOf(false) }
+    var showExposure by rememberSaveable { mutableStateOf(false) }
 
     var message by remember { mutableStateOf<String?>(null) }
     var messageId by remember { mutableIntStateOf(0) }
@@ -122,10 +163,11 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
         }
     }
     LaunchedEffect(messageId) {
-        delay(2_500)
+        delay(2_800)
         message = null
     }
 
+    val context = LocalContext.current
     val enableBluetooth = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         viewModel.startGrip()
     }
@@ -135,42 +177,58 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
             .fillMaxSize()
             .background(Color.Black),
     ) {
-        CameraPreview(viewModel.camera, Modifier.fillMaxSize())
+        CameraPreview(viewModel, Modifier.fillMaxSize())
+        FrameArea(cam.aspect) {
+            GridOverlay(settings[Prefs.GRID])
+            LevelOverlay(enabled = settings[Prefs.LEVEL])
+        }
         FocusReticle(cam)
         ShutterFlash(cam.shutterTick)
+        CountdownOverlay(countdown, iconRotation)
 
+        // ---------------- top ----------------
         Column(
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 6.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                GripStatusChip(
-                    status = grip,
-                    onClick = {
-                        when (grip) {
-                            GripStatus.MissingPermission -> onRequestBluetoothPermission()
-                            GripStatus.BluetoothOff -> try {
-                                enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-                            } catch (_: SecurityException) {
-                                onRequestBluetoothPermission()
+                // One weighted box, so the chip can use all the free width (not half of it).
+                Box(Modifier.weight(1f)) {
+                    GripStatusChip(
+                        status = grip,
+                        onClick = {
+                            when (grip) {
+                                GripStatus.MissingPermission -> onRequestBluetoothPermission()
+                                GripStatus.BluetoothOff -> try {
+                                    enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+                                } catch (_: SecurityException) {
+                                    onRequestBluetoothPermission()
+                                }
+                                is GripStatus.Failed, GripStatus.Stopped -> viewModel.restartGrip()
+                                else -> helpDismissed = !helpDismissed
                             }
-                            is GripStatus.Failed, GripStatus.Stopped -> viewModel.restartGrip()
-                            else -> helpDismissed = !helpDismissed
-                        }
-                    },
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Spacer(Modifier.weight(1f))
-                if (cam.recording) RecordingTimer(cam.recordedNanos, Modifier.rotate(iconRotation))
+                        },
+                    )
+                }
+                if (!cam.recording) SetupBadge(cam, settings, onClick = { showSettings = true })
                 Spacer(Modifier.width(8.dp))
-                RoundIconButton(
-                    icon = Icons.Filled.Settings,
-                    description = "Settings",
+                RoundIconButton(Icons.Filled.Settings, "Settings", { showSettings = true }, rotation = iconRotation, size = 40.dp)
+            }
+
+            if (cam.recording) {
+                RecordingHud(cam, settings, device, Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp), iconRotation)
+            } else {
+                QuickBar(
+                    viewModel = viewModel,
+                    cam = cam,
+                    settings = settings,
+                    exposureOpen = showExposure,
+                    onToggleExposure = { showExposure = !showExposure },
                     rotation = iconRotation,
-                    onClick = { showSettings = true },
+                    modifier = Modifier.padding(top = 8.dp),
                 )
             }
 
@@ -183,7 +241,12 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
             }
 
             AnimatedVisibility(visible = message != null, enter = fadeIn(), exit = fadeOut()) {
-                Box(Modifier.fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Text(
                         message.orEmpty(),
                         color = Color.White,
@@ -209,48 +272,70 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
             }
         }
 
+        // ---------------- bottom ----------------
         Column(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (settings.showLog) {
+            if (settings[Prefs.SHOW_LOG]) {
                 ControlLog(
                     lines = log,
                     onClear = viewModel::clearLog,
                     modifier = Modifier
                         .padding(horizontal = 12.dp)
-                        .padding(bottom = 12.dp),
+                        .padding(bottom = 10.dp),
                 )
             }
-            ZoomPill(cam, Modifier.rotate(iconRotation))
-            Spacer(Modifier.height(16.dp))
+            if (cam.aeAfLocked) {
+                Text(
+                    "AE/AF locked · tap to unlock",
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Accent)
+                        .clickable { viewModel.camera.unlockAeAf() }
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
+                )
+            }
+            AnimatedVisibility(visible = showExposure && cam.capabilities.exposureSupported) {
+                ExposurePanel(cam, onChange = viewModel.camera::setExposureIndex, modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp))
+            }
+            ZoomStopsRow(cam, settings, onSelect = viewModel.camera::animateZoomTo, rotation = iconRotation)
+            Spacer(Modifier.height(14.dp))
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RoundIconButton(
-                    icon = when (cam.flashMode) {
-                        ImageCapture.FLASH_MODE_AUTO -> Icons.Filled.FlashAuto
-                        ImageCapture.FLASH_MODE_ON -> Icons.Filled.FlashOn
-                        else -> Icons.Filled.FlashOff
-                    },
-                    description = "Photo flash",
-                    rotation = iconRotation,
-                    enabled = cam.hasFlashUnit,
-                    onClick = viewModel.camera::cycleFlash,
-                )
+                GalleryThumbnail(lastCapture, rotation = iconRotation) { capture ->
+                    val intent = Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(capture.uri, if (capture.video) "video/*" else "image/*")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    try {
+                        context.startActivity(intent)
+                    } catch (_: ActivityNotFoundException) {
+                        Toast.makeText(context, "No app found to open it", Toast.LENGTH_SHORT).show()
+                    }
+                }
                 RecordButton(recording = cam.recording, onClick = viewModel.camera::toggleRecording)
-                ShutterButton(onClick = viewModel.camera::takePhoto)
+                ShutterButton(
+                    burstCount = cam.burstCount,
+                    timerArmed = settings[Prefs.TIMER] != SelfTimer.OFF,
+                    onPress = viewModel::shutterDown,
+                    onRelease = viewModel::shutterUp,
+                )
                 RoundIconButton(
                     icon = Icons.Filled.Cameraswitch,
-                    description = "Switch camera",
+                    description = if (cam.recording) "Switch camera (keeps recording)" else "Switch camera",
                     rotation = iconRotation,
-                    enabled = cam.canSwitchLens && !cam.recording,
+                    enabled = cam.canSwitchLens,
                     onClick = viewModel.camera::switchCamera,
                 )
             }
@@ -258,11 +343,10 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
     }
 
     if (showSettings) {
-        SettingsSheet(
-            settings = settings,
-            onChange = viewModel::updateSettings,
-            onRestartBluetooth = viewModel::restartGrip,
-            onDismiss = { showSettings = false },
+        SettingsScreen(
+            viewModel = viewModel,
+            capabilities = cam.capabilities,
+            onClose = { showSettings = false },
         )
     }
 }
@@ -271,98 +355,71 @@ fun CameraScreen(viewModel: MainViewModel, onRequestBluetoothPermission: () -> U
 // Viewfinder
 // -------------------------------------------------------------------------------------------
 
+/** The part of the screen the picture occupies (the preview is letterboxed: what you see is what you get). */
+@Composable
+private fun FrameArea(aspect: FrameAspect, content: @Composable () -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        // Portrait UI: the frame is taller than wide.
+        val ratio = aspect.longOverShort
+        var w = maxWidth
+        var h = maxWidth * ratio
+        if (h > maxHeight) {
+            h = maxHeight
+            w = maxHeight / ratio
+        }
+        Box(Modifier.size(w, h)) { content() }
+    }
+}
+
 @SuppressLint("ClickableViewAccessibility")
 @Composable
-private fun CameraPreview(controller: CameraController, modifier: Modifier = Modifier) {
+private fun CameraPreview(viewModel: MainViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val controller = viewModel.camera
     val previewView = remember {
         PreviewView(context).apply {
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-            contentDescription = "Camera viewfinder. Tap to focus, pinch to zoom."
+            scaleType = PreviewView.ScaleType.FIT_CENTER
+            contentDescription = "Camera viewfinder. Tap to focus, long-press to lock, double-tap to switch camera, pinch to zoom."
             val pinch = ScaleGestureDetector(context, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 override fun onScale(detector: ScaleGestureDetector): Boolean {
                     controller.pinchZoom(detector.scaleFactor)
                     return true
                 }
             })
-            val tap = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-                override fun onSingleTapUp(e: MotionEvent): Boolean {
+            val gestures = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+                override fun onDown(e: MotionEvent) = true
+
+                override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
                     if (width == 0 || height == 0) return false
-                    controller.startAutoFocus(
-                        point = meteringPointFactory.createPoint(e.x, e.y),
-                        viewFraction = (e.x / width) to (e.y / height),
-                    )
+                    viewModel.tapToFocus(meteringPointFactory.createPoint(e.x, e.y), (e.x / width) to (e.y / height))
                     performClick()
                     return true
+                }
+
+                override fun onDoubleTap(e: MotionEvent): Boolean {
+                    controller.switchCamera()
+                    return true
+                }
+
+                override fun onLongPress(e: MotionEvent) {
+                    if (width == 0 || height == 0) return
+                    viewModel.longPressLock(meteringPointFactory.createPoint(e.x, e.y), (e.x / width) to (e.y / height))
                 }
             })
             setOnTouchListener { _, event ->
                 pinch.onTouchEvent(event)
-                if (!pinch.isInProgress) tap.onTouchEvent(event)
+                if (!pinch.isInProgress) gestures.onTouchEvent(event)
                 true
             }
         }
     }
     DisposableEffect(lifecycleOwner) {
-        controller.attach(lifecycleOwner, previewView)
+        controller.attach(lifecycleOwner, previewView.surfaceProvider)
         onDispose { controller.detach(lifecycleOwner) }
     }
     AndroidView(factory = { previewView }, modifier = modifier)
-}
-
-@Composable
-private fun FocusReticle(cam: CameraUiState) {
-    val visible = cam.focus != FocusUi.IDLE
-    val color by animateColorAsState(
-        when (cam.focus) {
-            FocusUi.FOCUSED -> FocusGreen
-            FocusUi.FAILED -> RecordRed
-            else -> Color.White
-        },
-        label = "reticleColor",
-    )
-    val size by animateDpAsState(if (cam.focus == FocusUi.FOCUSING) 84.dp else 68.dp, label = "reticleSize")
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        if (visible) {
-            val (fx, fy) = cam.focusPoint ?: (0.5f to 0.5f)
-            val half = with(LocalDensity.current) { (size / 2).roundToPx() }
-            Box(
-                Modifier
-                    .offset { IntOffset((constraints.maxWidth * fx).roundToInt() - half, (constraints.maxHeight * fy).roundToInt() - half) }
-                    .size(size)
-                    .border(2.dp, color, RoundedCornerShape(6.dp)),
-            )
-        }
-        if (cam.manualFocus) {
-            Column(
-                Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("MF", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Spacer(Modifier.height(6.dp))
-                Box(
-                    Modifier
-                        .width(6.dp)
-                        .height(160.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(Scrim),
-                ) {
-                    // Near at the top, infinity at the bottom.
-                    Box(
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .height(160.dp * cam.manualFocusPosition)
-                            .background(Color(0xFFFFB74D)),
-                    )
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -372,8 +429,8 @@ private fun ShutterFlash(tick: Int) {
     LaunchedEffect(tick) {
         if (tick != lastTick) {
             lastTick = tick
-            alpha.snapTo(0.7f)
-            alpha.animateTo(0f, tween(220))
+            alpha.snapTo(0.6f)
+            alpha.animateTo(0f, tween(200))
         }
     }
     Box(
@@ -385,7 +442,7 @@ private fun ShutterFlash(tick: Int) {
 }
 
 // -------------------------------------------------------------------------------------------
-// Status
+// Top: status, setup badge, quick controls, recording HUD
 // -------------------------------------------------------------------------------------------
 
 @Composable
@@ -398,16 +455,12 @@ private fun GripStatusChip(status: GripStatus, onClick: () -> Unit, modifier: Mo
         )
         is GripStatus.Advertising -> Triple(
             Icons.Filled.BluetoothSearching,
-            Color(0xFFFFB74D),
-            if (status.pairingMode) "Waiting for grip · pairing open" else "Waiting for grip",
+            Accent,
+            if (status.pairingMode) "Ready to pair" else "Waiting for grip",
         )
         GripStatus.BluetoothOff -> Triple(Icons.Filled.BluetoothDisabled, RecordRed, "Bluetooth is off · tap to turn on")
         GripStatus.MissingPermission -> Triple(Icons.Filled.BluetoothDisabled, RecordRed, "Allow Nearby devices · tap")
-        GripStatus.Unsupported -> Triple(
-            Icons.Filled.BluetoothDisabled,
-            RecordRed,
-            "This phone can't host a Bluetooth grip",
-        )
+        GripStatus.Unsupported -> Triple(Icons.Filled.BluetoothDisabled, RecordRed, "This phone can't host a Bluetooth grip")
         is GripStatus.Failed -> Triple(Icons.Filled.BluetoothDisabled, RecordRed, status.message)
         GripStatus.Stopped -> Triple(Icons.Filled.Bluetooth, Color.White, "Grip off · tap to start")
     }
@@ -422,6 +475,236 @@ private fun GripStatusChip(status: GripStatus, onClick: () -> Unit, modifier: Mo
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(6.dp))
         Text(text, color = Color.White, style = MaterialTheme.typography.labelLarge, maxLines = 2)
+    }
+}
+
+/** "1080p 30 · STD" — what the camera is set to, tap for settings. */
+@Composable
+private fun SetupBadge(cam: CameraUiState, settings: AppSettings, onClick: () -> Unit) {
+    val a = cam.active
+    val text = buildString {
+        append(a.videoLabel ?: settings[Prefs.VIDEO_RESOLUTION].label)
+        append(' ')
+        append(a.fps ?: settings[Prefs.FRAME_RATE].fps)
+        if (a.hdr) append(" HDR")
+    }
+    Text(
+        text,
+        color = Color.White,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Scrim)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    )
+}
+
+@Composable
+private fun QuickBar(
+    viewModel: MainViewModel,
+    cam: CameraUiState,
+    settings: AppSettings,
+    exposureOpen: Boolean,
+    onToggleExposure: () -> Unit,
+    rotation: Float,
+    modifier: Modifier = Modifier,
+) {
+    val caps = cam.capabilities
+    Row(
+        modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+    ) {
+        if (caps.flash) {
+            QuickToggle(
+                icon = when (cam.flashMode) {
+                    ImageCapture.FLASH_MODE_AUTO -> Icons.Filled.FlashAuto
+                    ImageCapture.FLASH_MODE_ON -> Icons.Filled.FlashOn
+                    else -> Icons.Filled.FlashOff
+                },
+                label = "Flash",
+                active = cam.flashMode != ImageCapture.FLASH_MODE_OFF,
+                rotation = rotation,
+                onClick = viewModel.camera::cycleFlash,
+            )
+        }
+        val stab = settings[Prefs.STABILIZATION]
+        QuickToggle(
+            icon = Icons.Filled.VideoStable,
+            label = when (stab) {
+                Stabilization.OFF -> "Stab off"
+                Stabilization.STANDARD -> "Stab"
+                Stabilization.STEADY -> "Steady"
+            },
+            active = stab != Stabilization.OFF,
+            rotation = rotation,
+            onClick = { viewModel.cycle(Prefs.STABILIZATION) },
+        )
+        if (caps.hdrVideo) {
+            val hdr = settings[Prefs.HDR_VIDEO]
+            QuickToggle(
+                icon = if (hdr) Icons.Filled.HdrOn else Icons.Filled.HdrOff,
+                label = "HDR",
+                active = hdr,
+                rotation = rotation,
+                onClick = { viewModel.set(Prefs.HDR_VIDEO, !hdr) },
+            )
+        }
+        if (caps.enhancements.size > 1) {
+            val mode = settings[Prefs.PHOTO_MODE]
+            QuickToggle(
+                icon = Icons.Filled.Nightlight,
+                label = if (mode == PhotoEnhancement.NONE) "Mode" else mode.label,
+                active = mode != PhotoEnhancement.NONE,
+                rotation = rotation,
+                onClick = { viewModel.cycle(Prefs.PHOTO_MODE) },
+            )
+        }
+        val timer = settings[Prefs.TIMER]
+        QuickToggle(
+            icon = when (timer) {
+                SelfTimer.OFF -> Icons.Filled.TimerOff
+                SelfTimer.S3 -> Icons.Filled.Timer3
+                SelfTimer.S10 -> Icons.Filled.Timer10
+            },
+            label = "Timer",
+            active = timer != SelfTimer.OFF,
+            rotation = rotation,
+            onClick = { viewModel.cycle(Prefs.TIMER) },
+        )
+        val grid = settings[Prefs.GRID]
+        QuickToggle(
+            icon = if (grid == GridStyle.OFF) Icons.Filled.GridOff else Icons.Filled.GridOn,
+            label = "Grid",
+            active = grid != GridStyle.OFF,
+            rotation = rotation,
+            onClick = { viewModel.cycle(Prefs.GRID) },
+        )
+        if (caps.exposureSupported) {
+            val ev = cam.exposureIndex * caps.exposureStep
+            QuickToggle(
+                icon = Icons.Filled.Exposure,
+                label = if (cam.exposureIndex == 0) "EV" else String.format(Locale.US, "%+.1f", ev),
+                active = exposureOpen || cam.exposureIndex != 0,
+                rotation = rotation,
+                onClick = onToggleExposure,
+            )
+        }
+        if (caps.whiteBalance.size > 1) {
+            QuickToggle(
+                icon = when (cam.whiteBalance) {
+                    WhiteBalance.AUTO -> Icons.Filled.WbAuto
+                    WhiteBalance.DAYLIGHT -> Icons.Filled.WbSunny
+                    WhiteBalance.CLOUDY -> Icons.Filled.WbCloudy
+                    WhiteBalance.TUNGSTEN -> Icons.Filled.WbIncandescent
+                    WhiteBalance.FLUORESCENT -> Icons.Filled.WbIridescent
+                },
+                label = if (cam.whiteBalance == WhiteBalance.AUTO) "WB" else cam.whiteBalance.label,
+                active = cam.whiteBalance != WhiteBalance.AUTO,
+                rotation = rotation,
+                onClick = viewModel.camera::cycleWhiteBalance,
+            )
+        }
+        QuickTextToggle(
+            text = settings[Prefs.ASPECT].label,
+            label = "Frame",
+            rotation = rotation,
+            onClick = { viewModel.cycle(Prefs.ASPECT) },
+        )
+    }
+}
+
+@Composable
+private fun QuickToggle(icon: ImageVector, label: String, active: Boolean, rotation: Float, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (active) Accent.copy(alpha = 0.25f) else Scrim)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = label }
+            .padding(horizontal = 8.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(icon, contentDescription = null, tint = if (active) Accent else Color.White, modifier = Modifier.size(20.dp).rotate(rotation))
+        Text(label, color = Color.White, fontSize = 10.sp, maxLines = 1)
+    }
+}
+
+@Composable
+private fun QuickTextToggle(text: String, label: String, rotation: Float, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(Scrim)
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = "$label $text" }
+            .padding(horizontal = 8.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(text, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.height(20.dp).rotate(rotation))
+        Text(label, color = Color.White, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun RecordingHud(cam: CameraUiState, settings: AppSettings, device: DeviceStatus, modifier: Modifier, rotation: Float) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            Modifier
+                .clip(RoundedCornerShape(50))
+                .background(Scrim)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            val seconds = cam.recordedNanos / 1_000_000_000L
+            Box(
+                Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(RecordRed),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                String.format(Locale.US, "%02d:%02d:%02d", seconds / 3600, (seconds % 3600) / 60, seconds % 60),
+                color = Color.White,
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+            )
+            if (settings[Prefs.RECORD_AUDIO]) {
+                Spacer(Modifier.width(10.dp))
+                AudioMeter(cam.audioLevel)
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        val a = cam.active
+        val badges = listOfNotNull(
+            a.videoLabel,
+            a.fps?.let { "$it fps" },
+            if (a.hdr) "HDR" else null,
+            when (a.stabilization) {
+                Stabilization.OFF -> null
+                Stabilization.STANDARD -> "STAB"
+                Stabilization.STEADY -> "STEADY"
+            },
+        )
+        val bitsPerSecond = if (cam.recordedNanos > 2_000_000_000L) {
+            cam.recordedBytes * 8 * 1_000_000_000L / cam.recordedNanos
+        } else {
+            VideoMath.estimatedBitrate(
+                VideoResolution.entries.firstOrNull { it.label == a.videoLabel } ?: settings[Prefs.VIDEO_RESOLUTION],
+                a.fps ?: FrameRate.FPS_30.fps,
+                settings[Prefs.BITRATE],
+            )
+        }
+        val info = listOfNotNull(
+            badges.joinToString(" · ").ifEmpty { null },
+            if (device.freeBytes > 0) "${VideoMath.formatDuration(VideoMath.remainingSeconds(device.freeBytes, bitsPerSecond))} left" else null,
+            if (device.batteryPercent >= 0) "${device.batteryPercent}%" else null,
+        ).joinToString("   ")
+        Text(info, color = Color.White, fontSize = 11.sp, modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(Scrim).padding(horizontal = 8.dp, vertical = 3.dp))
     }
 }
 
@@ -460,40 +743,110 @@ private fun PairingHelpCard(onClose: () -> Unit, modifier: Modifier = Modifier) 
     }
 }
 
+// -------------------------------------------------------------------------------------------
+// Bottom: exposure, zoom stops, shutter row, log
+// -------------------------------------------------------------------------------------------
+
 @Composable
-private fun RecordingTimer(nanos: Long, modifier: Modifier = Modifier) {
-    val seconds = nanos / 1_000_000_000L
-    val text = String.format(Locale.US, "%02d:%02d", seconds / 60, seconds % 60)
+private fun ExposurePanel(cam: CameraUiState, onChange: (Int) -> Unit, modifier: Modifier = Modifier) {
+    val caps = cam.capabilities
     Row(
         modifier
             .clip(RoundedCornerShape(50))
             .background(Scrim)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+            .padding(horizontal = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(RecordRed),
+        Text(
+            String.format(Locale.US, "%+.1f EV", cam.exposureIndex * caps.exposureStep),
+            color = Color.White,
+            fontSize = 12.sp,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier.width(64.dp),
         )
-        Spacer(Modifier.width(6.dp))
-        Text(text, color = Color.White, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+        Slider(
+            value = cam.exposureIndex.toFloat(),
+            onValueChange = { onChange(it.roundToInt()) },
+            valueRange = caps.exposureMin.toFloat()..caps.exposureMax.toFloat(),
+            steps = (caps.exposureMax - caps.exposureMin - 1).coerceAtLeast(0),
+            colors = SliderDefaults.colors(thumbColor = Accent, activeTrackColor = Accent),
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = { onChange(0) }) { Text("0", color = Color.White) }
     }
 }
 
 @Composable
-private fun ZoomPill(cam: CameraUiState, modifier: Modifier = Modifier) {
-    val text = String.format(Locale.US, "%.1f×", cam.zoomRatio)
-    Text(
-        text,
-        color = if (cam.zoomRatio > cam.minZoom + 0.05f) Color(0xFFFFB74D) else Color.White,
-        fontWeight = FontWeight.SemiBold,
-        modifier = modifier
+private fun ZoomStopsRow(cam: CameraUiState, settings: AppSettings, onSelect: (Float) -> Unit, rotation: Float) {
+    val stops = ZoomMath.stops(settings[Prefs.ZOOM_STOPS].stops, cam.minZoom, cam.maxZoom)
+    val nearest = ZoomMath.nearest(cam.zoomRatio, stops)
+    val selected = if (nearest >= 0) nearest else stops.indexOfLast { it <= cam.zoomRatio }.coerceAtLeast(0)
+    Row(
+        Modifier
             .clip(RoundedCornerShape(50))
             .background(Scrim)
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-    )
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        stops.forEachIndexed { i, stop ->
+            val isSelected = i == selected
+            val size by animateDpAsState(if (isSelected) 40.dp else 32.dp, label = "zoomChip")
+            val text = if (isSelected) {
+                "${ZoomMath.label(cam.zoomRatio)}×"
+            } else {
+                ZoomMath.label(stop)
+            }
+            Box(
+                Modifier
+                    .size(size)
+                    .clip(CircleShape)
+                    .background(if (isSelected) Color.Black.copy(alpha = 0.6f) else Color.Transparent)
+                    .clickable(role = Role.Button) { onSelect(stop) }
+                    .semantics { contentDescription = "Zoom ${ZoomMath.label(stop)}×" },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text,
+                    color = if (isSelected) Accent else Color.White,
+                    fontSize = if (isSelected) 12.sp else 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.rotate(rotation),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GalleryThumbnail(capture: LastCapture?, rotation: Float, onOpen: (LastCapture) -> Unit) {
+    Box(
+        Modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Scrim)
+            .border(1.5.dp, Color.White.copy(alpha = 0.8f), RoundedCornerShape(10.dp))
+            .clickable(enabled = capture != null, role = Role.Button) { capture?.let(onOpen) }
+            .semantics { contentDescription = "Open last photo or video" },
+        contentAlignment = Alignment.Center,
+    ) {
+        val bitmap = capture?.thumbnail
+        if (bitmap != null) {
+            Image(
+                bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .rotate(rotation),
+            )
+            if (capture.video) {
+                Icon(Icons.Filled.PlayCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+        } else {
+            Icon(Icons.Filled.PhotoLibrary, contentDescription = null, tint = Color.White.copy(alpha = 0.7f))
+        }
+    }
 }
 
 @Composable
@@ -503,7 +856,7 @@ private fun ControlLog(lines: List<String>, onClear: () -> Unit, modifier: Modif
     Box(
         modifier
             .fillMaxWidth()
-            .heightIn(max = 180.dp)
+            .heightIn(max = 160.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color.Black.copy(alpha = 0.7f)),
     ) {
@@ -520,27 +873,29 @@ private fun ControlLog(lines: List<String>, onClear: () -> Unit, modifier: Modif
                 Text(line, color = Color(0xFFB2FF59), fontFamily = FontFamily.Monospace, fontSize = 11.sp, lineHeight = 14.sp)
             }
         }
-        IconButton(onClick = onClear, modifier = Modifier.align(Alignment.TopEnd).size(36.dp)) {
+        IconButton(
+            onClick = onClear,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(36.dp),
+        ) {
             Icon(Icons.Filled.DeleteSweep, contentDescription = "Clear log", tint = Color.White.copy(alpha = 0.8f))
         }
     }
 }
 
-// -------------------------------------------------------------------------------------------
-// Buttons
-// -------------------------------------------------------------------------------------------
-
 @Composable
-private fun RoundIconButton(
+fun RoundIconButton(
     icon: ImageVector,
     description: String,
     onClick: () -> Unit,
     rotation: Float = 0f,
     enabled: Boolean = true,
+    size: Dp = 48.dp,
 ) {
     Box(
         Modifier
-            .size(48.dp)
+            .size(size)
             .clip(CircleShape)
             .background(Scrim)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -556,19 +911,39 @@ private fun RoundIconButton(
     }
 }
 
+/** Press = photo (or burst start / timer); release ends a burst. */
 @Composable
-private fun ShutterButton(onClick: () -> Unit) {
+private fun ShutterButton(burstCount: Int, timerArmed: Boolean, onPress: () -> Unit, onRelease: () -> Unit) {
+    val press by rememberUpdatedState(onPress)
+    val release by rememberUpdatedState(onRelease)
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(if (pressed) 0.88f else 1f, label = "shutterScale")
     Box(
         Modifier
             .size(78.dp)
+            .scale(scale)
             .clip(CircleShape)
             .border(4.dp, Color.White, CircleShape)
-            .clickable(role = Role.Button, onClick = onClick)
+            .pointerInput(Unit) {
+                detectTapGestures(onPress = {
+                    pressed = true
+                    press()
+                    tryAwaitRelease()
+                    pressed = false
+                    release()
+                })
+            }
             .semantics { contentDescription = "Take photo" }
             .padding(8.dp)
             .clip(CircleShape)
             .background(Color.White),
-    )
+        contentAlignment = Alignment.Center,
+    ) {
+        when {
+            burstCount > 0 -> Text("$burstCount", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            timerArmed -> Icon(Icons.Filled.Timer, contentDescription = null, tint = Color.Black)
+        }
+    }
 }
 
 @Composable
