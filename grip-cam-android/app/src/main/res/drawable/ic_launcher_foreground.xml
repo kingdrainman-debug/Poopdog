@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A camera body sitting on a grip handle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- grip handle -->
+    <path
+        android:fillColor="#FF3A4048"
+        android:pathData="M48,60h12v22a4,4 0,0 1,-4 4h-4a4,4 0,0 1,-4 -4z" />
+    <!-- camera body -->
+    <path
+        android:fillColor="#FFECEFF1"
+        android:pathData="M30,36h12l4,-6h16l4,6h12a4,4 0,0 1,4 4v20a4,4 0,0 1,-4 4H30a4,4 0,0 1,-4 -4V40a4,4 0,0 1,4 -4z" />
+    <!-- lens -->
+    <path
+        android:fillColor="#FF101418"
+        android:pathData="M54,50m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
+    <path
+        android:fillColor="#FFFF5252"
+        android:pathData="M54,50m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <!-- record dot -->
+    <path
+        android:fillColor="#FFFF5252"
+        android:pathData="M76,42m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+</vector>

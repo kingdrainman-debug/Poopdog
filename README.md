@@ -11,6 +11,10 @@ Generate rave visuals from a DJ mix in one click.
 > local http server). The files below are the V1 prototype, kept as the
 > spec's reference implementation.
 
+> **Also in this repo: [GripCam](grip-cam-android/README.md)**, an Android app that lets a
+> Sony GP-VPT2BT Bluetooth shooting grip control your phone's camera (PHOTO, MOVIE, zoom
+> lever, C1). Build it with `cd grip-cam-android && ./gradlew assembleDebug`.
+
 Poopdog understands the music first, then drives the visuals automatically:
 drop in an MP3/WAV, the engine detects **BPM, beats, kicks, snares, drops,
 build-ups and energy levels**, then **Auto Show Mode** generates a full
