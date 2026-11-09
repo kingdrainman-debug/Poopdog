@@ -2,8 +2,8 @@
 // then bursts into a small pink splash. Drawn on flat chroma green; the white version is made by swapping
 // the exact key colour afterwards, so both renders have identical bubbles.
 //
-// Layout: a 16×9 jittered grid of "slots" covers the whole 320×180 frame (each art pixel = 6×6 on screen).
-// Seamless 60 s loop: every slot repeats on a 4, 5 or 6 s cycle (all divide 60) and each cycle's position/size
+// Layout: a 12×7 jittered grid of "slots" covers the whole 320×180 frame (each art pixel = 6×6 on screen).
+// Seamless 60 s loop: every slot repeats on a 5 or 6 s cycle (both divide 60) and each cycle's position/size
 // comes from hash(slot, cycle index mod cycles-per-loop), so t = 60 is exactly t = 0.
 // Keying: every drawn pixel is opaque; no palette colour is near white or green.
 SCENES['pink_bubbles'] = (() => {
@@ -14,9 +14,9 @@ SCENES['pink_bubbles'] = (() => {
     outline: hex('#7a1048'), rim: hex('#d9468f'), mid: hex('#ef68ad'),
     body: hex('#ff8cc6'), light: hex('#ffaad5'), hi: hex('#ffc4e1'),
   };
-  const LOOP = 60, COLS = 16, ROWS = 9, CW = LW / COLS, CH = LH / ROWS;
+  const LOOP = 60, COLS = 12, ROWS = 7, CW = LW / COLS, CH = LH / ROWS;
   const APPEAR = 0.22, TREM = 0.36, POP = 0.42;
-  const LENS = [4, 5, 6];
+  const LENS = [5, 6];
   const slots = [];
   for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
     const id = j * COLS + i;
@@ -29,7 +29,7 @@ SCENES['pink_bubbles'] = (() => {
   function stateOf(s, t) {
     const tt = ((t + s.off) % LOOP + LOOP) % LOOP, k = Math.floor(tt / s.L), u = tt - k * s.L, n = LOOP / s.L, kk = k % n;
     const h = q => hash(s.id, kk, 100 + q);
-    const rmax = 4 + 4.6 * Math.pow(h(1), 1.2);
+    const rmax = 5.5 + 5.5 * Math.pow(h(1), 1.2);
     const gap = 0.12 + 0.55 * h(3), life = s.L - gap, inflate = life - APPEAR - TREM - POP;   // each slot is busy ~90% of its cycle
     const v = u - gap; if (v < 0 || v >= life) return null;
     const cx = (s.i + 0.5 + (h(4) - 0.5) * 0.75) * CW, cy = (s.j + 0.5 + (h(5) - 0.5) * 0.75) * CH;

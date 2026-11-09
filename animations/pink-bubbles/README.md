@@ -11,14 +11,14 @@ Both files are 1920×1080, 30 fps, 60 s, H.264, BT.709, with no audio. The bubbl
 
 ## What happens
 
-- **Spread:** 144 bubble spots on a jittered 16×9 grid cover the whole frame. Each spot is busy about 90% of the time, so the screen stays full.
-- **Size:** bubbles grow to a radius of 4–8.6 art pixels, which is about 50–100 px across on a 1080p frame.
+- **Spread:** 84 bubble spots on a jittered 12×7 grid cover the whole frame. Each spot is busy about 90% of the time, so the screen stays full.
+- **Size:** bubbles grow to a radius of 5.5–11 art pixels, which is about 65–130 px across on a 1080p frame.
 - **Life of a bubble:**
   1. It pops in with a little overshoot.
   2. It inflates while gently breathing and drifting upward.
   3. At full size it trembles with a quick squash-and-stretch.
   4. It bursts: a broken ring, eight short streaks, and a few droplets that fall a little.
-- **Loop:** every spot repeats on a 4, 5 or 6 s cycle, and each of those divides 60. Each cycle's position and size come from a fixed seed, so the frame at 60 s is identical to frame 0.
+- **Loop:** every spot repeats on a 5 or 6 s cycle, and both divide 60. Each cycle's position and size come from a fixed seed, so the frame at 60 s is identical to frame 0.
 
 ## Keying notes
 
