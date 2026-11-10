@@ -1,6 +1,6 @@
 # Big bubbles: pink, purple and cream pixel art for keying
 
-Big pixel-art bubbles, mostly pink with some purple and cream ones mixed in. Each bubble pops in, inflates, trembles, then bursts into a splash in its own colours. It's a seamless 60-second loop, rendered twice: once on pure white and once on pure green.
+Big pixel-art bubbles, mostly pink with some purple and cream ones mixed in. Each bubble pops in, inflates quickly, and bursts the moment it reaches full size, releasing a splash in its own colours. It's a seamless 60-second loop, rendered twice: once on pure white and once on pure green.
 
 | File | Background |
 |---|---|
@@ -9,19 +9,19 @@ Big pixel-art bubbles, mostly pink with some purple and cream ones mixed in. Eac
 
 Both files are 1920×1080, 30 fps, 60 s, H.264, BT.709, with no audio. The bubbles are pixel-identical in the two renders; only the background colour differs.
 
-This is a sibling of `../pink-bubbles`. The bubbles are about twice the size and there are far fewer of them.
+This is a sibling of `../pink-bubbles`. The bubbles are about three times the size, there are far fewer of them, and each one lives about 2 seconds.
 
 ## What happens
 
-- **Spread:** 28 bubble spots on a jittered 7×4 grid cover the frame. Each spot is busy about 90% of the time.
-- **Size:** bubbles grow to a radius of 11–20 art pixels, which is about 130–240 px across on a 1080p frame.
+- **Spread:** 18 bubble spots on a jittered 6×3 grid cover the frame. Each spot is busy about 75% of the time.
+- **Size:** bubbles grow to a radius of 16–27 art pixels, which is about 190–325 px across on a 1080p frame.
 - **Colours:** each bubble's colour is picked when it appears: about 50% pink, 25% purple, 25% cream.
 - **Life of a bubble:**
-  1. It pops in with a little overshoot.
-  2. It inflates while gently breathing and drifting upward.
-  3. At full size it trembles with a quick squash-and-stretch.
-  4. It bursts: a broken ring, twelve streaks, and eight droplets that fall a little, all sized to the bubble.
-- **Loop:** every spot repeats on a 5 or 6 s cycle, and both divide 60. Each cycle's position, size and colour come from a fixed seed, so the frame at 60 s is identical to frame 0.
+  1. It pops in with a little overshoot (0.2 s).
+  2. It inflates fast and nearly steadily while drifting upward (1.3 s). It's still expanding when it reaches full size, so there's no pause or tremble before the pop.
+  3. It bursts: a broken ring, sixteen streaks, and ten droplets that fall a little, all sized to the bubble (0.5 s).
+- **Timing:** about 1.5 s from appearing to popping.
+- **Loop:** every spot repeats on a 2.5 or 3 s cycle, and both divide 60. Each cycle's position, size and colour come from a fixed seed, so the frame at 60 s is identical to frame 0.
 
 ## Colours
 
