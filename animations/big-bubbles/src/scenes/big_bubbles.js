@@ -1,5 +1,5 @@
-// Big pixel bubbles in pink, purple and cream: each one pops in, inflates quickly (about 1.5 s from appearing
-// to popping) and bursts the moment it reaches full size, releasing a splash in its own colours. Drawn on flat chroma green; the white version is
+// Big pixel bubbles in pink, purple and cream: each one pops in, inflates quickly (1.5 s), lingers at full size
+// for a moment (0.4 s, perfectly round, still drifting up) and then bursts, releasing a splash in its own colours. Drawn on flat chroma green; the white version is
 // made by swapping the exact key colour afterwards, so both renders have identical bubbles.
 //
 // Layout: a 6×3 jittered grid of "slots" covers the whole 320×180 frame (each art pixel = 6×6 on screen).
@@ -18,7 +18,7 @@ SCENES['big_bubbles'] = (() => {
   };
   const pickPal = v => (v < 0.5 ? PALS.pink : v < 0.75 ? PALS.purple : PALS.cream);
   const LOOP = 60, COLS = 6, ROWS = 3, CW = LW / COLS, CH = LH / ROWS;
-  const APPEAR = 0.2, INFLATE = 1.3, POP = 0.5;   // appear → pop = 1.5 s, then the burst
+  const APPEAR = 0.2, INFLATE = 1.3, HOLD = 0.4, POP = 0.5;   // pop-in + inflate = 1.5 s, linger 0.4 s, then the burst
   const LENS = [2.5, 3];
   const slots = [];
   for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
@@ -26,24 +26,25 @@ SCENES['big_bubbles'] = (() => {
     slots.push({ id, i, j, L: LENS[Math.floor(hash(id, 1, 13) * LENS.length)], off: hash(id, 2, 13) * LOOP });
   }
   const backOut = p => { const s = 2.0; p = clamp(p) - 1; return 1 + p * p * ((s + 1) * p + s); };
-  // fast, nearly steady growth that is still expanding when it bursts (no slow ease-in, no stop before the pop)
-  const grow = p => { p = clamp(p); return 0.6 * p + 0.4 * (1 - (1 - p) * (1 - p)); };
+  // fast growth with no slow ease-in, settling softly into full size so the linger doesn't start with a jolt
+  const grow = p => { p = clamp(p); return 1 - Math.pow(1 - p, 2.2); };
 
   // where a slot is in its life at time t → null, or { phase, x, y, rx, ry, r, q, C }
   function stateOf(s, t) {
     const tt = ((t + s.off) % LOOP + LOOP) % LOOP, k = Math.floor(tt / s.L), u = tt - k * s.L, n = LOOP / s.L, kk = k % n;
     const h = q => hash(s.id, kk, 200 + q);
     const rmax = 16 + 11 * Math.pow(h(1), 1.1), C = pickPal(h(8));
-    const life = APPEAR + INFLATE + POP, gap = h(3) * (s.L - life);
+    const life = APPEAR + INFLATE + HOLD + POP, gap = h(3) * (s.L - life);
     const v = u - gap; if (v < 0 || v >= life) return null;
     const cx = (s.i + 0.5 + (h(4) - 0.5) * 0.45) * CW, cy = (s.j + 0.5 + (h(5) - 0.5) * 0.45) * CH;
     const drift = 3 + 5 * h(6), ph = h(7) * TAU;
-    const vv = Math.min(v, APPEAR + INFLATE);                 // the burst stays where the bubble was
-    const x = cx + 1.4 * Math.sin(vv * 1.9 + ph), y = cy + 3 - drift * (vv / (APPEAR + INFLATE));
+    const FLOAT = APPEAR + INFLATE + HOLD, vv = Math.min(v, FLOAT);   // keeps drifting through the linger; the burst stays put
+    const x = cx + 1.4 * Math.sin(vv * 1.9 + ph), y = cy + 3 - drift * (vv / FLOAT);
     const r0 = Math.max(2, rmax * 0.2);
     if (v < APPEAR) { const r = r0 * backOut(v / APPEAR); return { phase: 'grow', x, y, rx: r, ry: r, r, C }; }
     if (v < APPEAR + INFLATE) { const r = r0 + (rmax - r0) * grow((v - APPEAR) / INFLATE); return { phase: 'grow', x, y, rx: r, ry: r, r, C }; }
-    return { phase: 'pop', x, y, r: rmax, q: SW.step(v - APPEAR - INFLATE, 15) / POP, seed: s.id * 97 + kk, C };
+    if (v < FLOAT) return { phase: 'grow', x, y, rx: rmax, ry: rmax, r: rmax, C };   // linger: full size, round, no shudder
+    return { phase: 'pop', x, y, r: rmax, q: SW.step(v - FLOAT, 15) / POP, seed: s.id * 97 + kk, C };
   }
 
   function bubble(b) {
