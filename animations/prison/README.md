@@ -4,7 +4,16 @@ Looping elements for a film, showing what a sci-fi prison might play to slowly c
 
 All layers share one orange-and-black palette (`src/prison_palette.js`): `#050302` `#1a0b03` `#3d1704` `#6e2a05` `#a8420a` `#e0600f` `#ff8418` `#ffad3d` `#ffd98a`.
 
-## Base spiral (in progress)
+## Base spiral: done
+
+`output/prison-base-spiral_30s.mp4` (1920×1080, 30 fps, 30 s, H.264, BT.709, no audio) is a seamless loop, made from `src/scenes/prison_base.js` (film `prisonbase`). It's option A with these changes:
+
+- **No screen effects:** the scanlines and the rolling refresh bar are removed.
+- **Much faster turn:** the spiral turns inward exactly 20 bands per 30 s, one every 1.5 s. That's about 10× the test speed.
+- **Vignette:** a strong vignette falls to near-black in the corners.
+- **Loop:** nothing else moves, so the frame at 30 s is identical to frame 0.
+
+## How the base spiral was chosen
 
 **Chosen direction: A, the "Conditioning screen"** (`src/scenes/prison_a.js`): a hard-edged two-arm orange-and-black spiral on an institutional CRT.
 
