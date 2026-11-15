@@ -3,8 +3,9 @@
 //   1–8.5 s    INHALE  five segments light orange one per beat, count 1 → 5
 //   8.5–16 s   HOLD    ring resets; five segments light one per beat, count 1 → 5
 //   16–23.5 s  EXHALE  the full orange ring drains to cyan in one smooth clockwise sweep, count 5 → 1 per beat
-//   23.5–25 s  EXHALE  ring fully cyan, calm air-flow waves in the centre
-// The centre number (and READY, and the waves) is centred on its real pixel bounding box, not the font's box.
+//   23.5–25 s  EXHALE  ring fully cyan, a miniature of the background hypnotic spiral turning in the centre
+// The centre number (and READY) is centred on its real pixel bounding box, not the font's box.
+// With window.CRT_ON the finished frame gets the CRT pass from crt.js (graphic only, never the key green).
 // The card is the opening prompt's label, taller (406×200) to fit the warnings, with the same corner radius,
 // stripe pitch and speed (96 stripes round), and the brand in a header strip. Timing is counted in whole frames
 // at 30 fps, so beats land exactly. 25 s is a multiple of the border's 5 s cycle, so the whole clip loops.
@@ -42,7 +43,6 @@
   // sentence-aware wrap for the reassurance: each sentence starts its own line
   const careLines = s => s.split(/(?<=\.)\s+/).flatMap(sent => wrap(sent, t => MED.width(t, CARE) <= 244));
   const warnLines = s => wrap(s, t => t.length <= 28);
-  const waves = (x, y, w, col) => UI.paint(UI.mask(c => { c.lineWidth = 2.2; for (let k = 0; k < 3; k++) { c.beginPath(); for (let i = 0; i <= w; i += 2) { const yy = y + k * 11 + 3 * Math.sin(i / w * Math.PI * 3 + k); i ? c.lineTo(x + i, yy) : c.moveTo(x + i, yy); } c.stroke(); } }), col, C.black, 1);
 
   // the dial: five segments with black gaps; lit = segments lit in order; drain = fraction swept to cyan
   const CX = 194, CY = 194, RO = 46, RI = 32, SEG = 5, GAP = 0.14;
@@ -57,6 +57,17 @@
     for (let k = 0; k < m.length; k++) if (m[k]) { const x = k % UI.W + dx, y = ((k / UI.W) | 0) + dy; if (x >= 0 && y >= 0 && x < UI.W && y < UI.H) o[y * UI.W + x] = 1; }
     UI.paint(o, col);
   }
+  // a miniature of the background conditioning spiral filling the dial's centre: two even-width orange and black
+  // arms with a hot core, turning inward 30 bands per 25 s (1.2 a second)
+  function miniSpiral(lt) {
+    const R = PRISON.R, BWM = 6.5, RAD = RI - 1, ph = 30 * lt / 25;
+    for (let y = CY - RAD; y <= CY + RAD; y++) for (let x = CX - RAD; x <= CX + RAD; x++) {
+      const dx = x + 0.5 - CX, dy = y + 0.5 - CY, r = Math.hypot(dx, dy);
+      if (r >= RAD) continue;
+      const on = Math.min(1, Math.max(0, 0.5 + Math.sin(TAU * (2 * Math.atan2(dy, dx) / TAU + r / BWM - ph)) * (BWM / TAU) / 1.2));
+      HD.put(x, y, HD.pick(R, Math.min(1, 0.02 + on * (0.55 + 0.4 * Math.exp(-r / 9))), x, y));
+    }
+  }
   function dial({ lit = 0, flash = -1, drain = null, center }) {
     UI.paint(UI.mask(c => { c.beginPath(); c.arc(CX, CY, RO + 1, 0, TAU); c.arc(CX, CY, RI - 1, TAU, 0, true); c.fill(); }), C.black);
     for (let k = 0; k < SEG; k++) {
@@ -67,10 +78,7 @@
     }
     if (center.digit) centred(UI.text(String(center.digit), `38px ${AB}`, CX, CY - 26, 'center'), C.black);
     else if (center.ready) centred(UI.text('READY', `8px ${PX}`, CX, CY - 4, 'center'), C.black);
-    else if (center.waves) {                                         // waves: measure, then redraw shifted
-      const m = UI.mask(c => { c.lineWidth = 2.2; for (let k = 0; k < 3; k++) { c.beginPath(); for (let i = 0; i <= 36; i += 2) { const yy = CY - 11 + k * 11 + 3 * Math.sin(i / 36 * Math.PI * 3 + k); i ? c.lineTo(CX - 18 + i, yy) : c.moveTo(CX - 18 + i, yy); } c.stroke(); } });
-      const { dx, dy } = shiftTo(m); waves(CX - 18 + dx, CY - 11 + dy, 36, C.cyan);
-    }
+    else if (center.spiral !== undefined) miniSpiral(center.spiral);
   }
 
   // what is on screen at frame fr (0..749); every beat is 45 frames (1.5 s)
@@ -88,7 +96,7 @@
     if (fr < REST0) {                                                 // EXHALE: drain over 5 beats, count 5 → 1
       return { st: STAGES.out, d: { drain: (fr - OUT0) / (REST0 - OUT0), center: { digit: 5 - Math.floor((fr - OUT0) / BEAT) } } };
     }
-    return { st: STAGES.out, d: { drain: 1, center: { waves: true } } };   // EXHALE: rest, all cyan
+    return { st: STAGES.out, d: { drain: 1, center: { spiral: fr / FPS } } };   // EXHALE: rest, all cyan, mini spiral
   }
 
   SCENES['med_breath_seq'] = {
@@ -118,6 +126,7 @@
       txt('DOSE IN PROGRESS', `8px ${PX}`, 333, 255, C.black, 'center');
       F.border(lt);
       HD.present(c);
+      if (window.CRT_ON) CRT.apply(c, lt, 5);
     },
   };
 })();

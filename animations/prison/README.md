@@ -110,9 +110,9 @@ Three candidate layouts are in `src/med_breath.js` (film `medbreath`, scenes `br
 | 1–8.5 s | INHALE | Five segments light orange, one per beat with a brief flash, counting 1 → 5. |
 | 8.5–16 s | HOLD | The ring resets, then five segments light one per beat, counting 1 → 5. |
 | 16–23.5 s | EXHALE | The full orange ring drains to cyan in one smooth clockwise sweep, counting 5 → 1, one per beat. |
-| 23.5–25 s | EXHALE, rest | The ring is fully cyan, with air-flow waves in the centre. |
+| 23.5–25 s | EXHALE, rest | The ring is fully cyan, with a miniature of the background spiral turning in the centre to signal the hypnotic effect. |
 
-The centre number, READY and the waves are each centred on their real pixel bounding box rather than the font's text box, so they sit dead centre in the ring.
+The centre number and READY are each centred on their real pixel bounding box rather than the font's text box, so they sit dead centre in the ring.
 
 The copy is the client's own:
 
@@ -129,4 +129,24 @@ Build notes:
 - **Slashed zeros:** zeros in the reassurance and warning lines are drawn with a slash through them, so "D0LL" never reads as "DOLL". The header code and sub-label keep the opening card's plain zeros.
 - **Timing:** counted in whole frames, so beats land exactly. 25 s is a multiple of the border's 5 s cycle, so the clip also loops seamlessly.
 - **Stills:** `directions/breathing/final-B-*.png` shows one moment of each stage.
+
+### CRT versions
+
+Both medicine overlays also come as a CRT-TV render (`src/crt.js`, switched on by `window.CRT_ON` in films `medlabelcrt` and `medbreathseqcrt`):
+
+- `output/med-prompt-label_green_crt_5s.mp4`
+- `output/med-breathing-sequence_green_crt_25s.mp4`
+
+**The CRT pass:**
+- **Lines:** scanlines on every 3-pixel row, plus faint phosphor columns.
+- **Glow:** a soft horizontal phosphor glow.
+- **Movement:** a slight flicker, a soft refresh bar rolling down once every 5 s, and a two-frame tracking jitter once every 5 s.
+
+**Keying safety:**
+- **Graphic only:** the pass treats only the graphic. Pixels that are exactly key green are never changed or sampled, so the background stays pure `#00FF00`.
+- **Same matte:** the key area is identical to the clean render's.
+- **No colour fringing:** chromatic aberration is deliberately left out, because splitting colour channels at orange/black or cyan/black edges would create green-ish pixels a keyer would eat.
+- **Loop:** everything repeats every 5 s, so both clips still loop seamlessly.
+
+The clean versions without the CRT pass are kept alongside.
 

@@ -2,6 +2,7 @@
 // A pharmacy / gas-canister label with an "LTX©" mark over a "d0ll-g4s" sub-label, small print and a barcode,
 // inside the rounded hazard border whose stripes run clockwise, unbroken round the corners (see med_common.js).
 // Keyable: exact #00FF00 background, every pixel opaque. Loops seamlessly every 5 s.
+// With window.CRT_ON the finished frame gets the CRT pass from crt.js (graphic only, never the key green).
 (() => {
   const { C, PX, AB, RX } = MED;
   function drawStill() {                                        // everything except the moving border
@@ -23,6 +24,7 @@
       drawStill();
       MED.border(lt);
       HD.present(c);
+      if (window.CRT_ON) CRT.apply(c, lt, 5);
     },
   };
 })();
