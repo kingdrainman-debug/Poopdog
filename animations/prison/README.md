@@ -12,7 +12,19 @@ All layers share one orange-and-black palette (`src/prison_palette.js`): `#05030
 - **Screen:** scanlines, a darkened tube edge, and a slow refresh bar rolling down the screen.
 - **Motion:** the spiral turns inward 4 bands per minute, and the refresh bar passes 3 times per minute. The frame at 60 s is identical to frame 0.
 
-Next step: try other rendering styles for this spiral (for example a degraded surveillance monitor, a text terminal, an LED dot-matrix panel, or a video wall), then animate the chosen one.
+### Screen-style tests
+
+These show spiral A on different "screens". Every style uses the same spiral and motion, from `PRISON.spiral` in `src/prison_palette.js`. The 5-second test clips are in `tests/`, and `directions/screen-style-tests.png` shows one frame of each.
+
+| Style | Source | What it adds |
+|---|---|---|
+| 2 · Surveillance monitor | `src/scenes/prison_surv.js` | Chunky 6×6 pixels, heavy scanlines, grain, a drifting VHS tracking band, and brief signal tears (one at 2.3 s). |
+| 3 · Terminal | `src/scenes/prison_term.js` | An 80×45 orange-phosphor text grid of `COMPLY·OBEY·REST·`. The spiral lights the words, and they stay as a faint ghost in the dark bands. |
+| 5 · Video wall | `src/scenes/prison_wall.js` | A 4×3 bank of CRTs with bezels. Each screen has its own brightness, one runs 0.45 s behind, one has a faulty refresh bar, and one drops to static (first at 3.1 s). |
+
+All three are built to loop seamlessly at 60 s.
+
+**Size note for the surveillance style:** its per-frame grain is costly to encode, at about 16 MB per 5 s. A full minute would need lighter or slower grain to stay under GitHub's 100 MB file limit.
 
 The other test directions are kept for reference:
 
@@ -31,6 +43,7 @@ You need `uv`, `ffmpeg` and Chromium for Playwright.
 B=/tmp/prison-build
 ./sync.sh $B
 uv run --with playwright python $B/render.py --film prisontests --solo prison_a --no-counter --stills 0,7.5 --out stills/
+uv run --with playwright python $B/render.py --film prisonstyles --solo prison_term --no-counter --stills 0,1.5 --out stills/
 ```
 
 In a sandbox where Chromium is preinstalled for a specific Playwright version, pin it, for example `--with playwright==1.63.0`.
