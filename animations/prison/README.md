@@ -57,3 +57,20 @@ uv run --with playwright python $B/render.py --film prisonstyles --solo prison_t
 ```
 
 In a sandbox where Chromium is preinstalled for a specific Playwright version, pin it, for example `--with playwright==1.63.0`.
+
+## Medicine prompt overlay (in progress)
+
+A keyable overlay on pure `#00FF00`. It tells the prisoner to prepare for their medicine, an inhaled gas, then counts them through **INHALE** (4), **HOLD** (3) and **EXHALE**.
+
+**Colours:** the prison's black, rust and orange, plus two medical colours: a warm clinical white (`#f3f0e8`) and a sterile azure-cyan (`#4cc9ea` / `#1b8fb5`). The cyan is roughly the complement of orange and well away from the key green. Every pixel is opaque, and no colour is green-ish. Crosses are cyan or orange, never a red cross on white.
+
+Five candidate styles of the opening prompt are in `directions/med-prompt/` (`all-five-styles.png` shows them side by side). The source is `src/med_prompts.js` (film `medstyles`), built on `src/ui_lib.js`, which rasterises shapes and type to hard-edged pixels.
+
+| Style | Look |
+|---|---|
+| 1 · Clinical card | A white notice card with an orange "MEDICAL NOTICE" bar, a cyan cross badge, and a dose progress bar. |
+| 2 · Dispensary LED | Cyan dot-matrix lettering and an orange LED cross on a black sign. |
+| 3 · Medication label | A pharmacy or gas-canister label: Rx mark, small print and barcode, inside an orange-and-black hazard border. |
+| 4 · Respirator HUD | No panel. Floating cyan corner brackets, an orange respirator icon, and outlined sci-fi type. |
+| 5 · Capsule | The prompt printed across a giant half-orange, half-white pill, with a cyan cross badge. |
+
