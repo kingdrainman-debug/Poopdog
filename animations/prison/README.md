@@ -64,8 +64,9 @@ In a sandbox where Chromium is preinstalled for a specific Playwright version, p
 
 - **Mark:** "LTX" replaces "Rx". It's sized automatically to fit the widened left column.
 - **Barcode number:** `U-R-RBBR-D011`.
-- **Moving border:** the orange-and-black hazard stripes run clockwise around the box like a marquee: 96 stripes on a 1152 px perimeter, moving exactly 2 art pixels per frame. The motion is perfectly even, and the clip loops at 5 s or any multiple of it.
-- **Corners:** black corner blocks with orange rivets sit where the stripes turn.
+- **Moving border:** the orange-and-black hazard stripes run clockwise around the box like a marquee, flowing unbroken round rounded corners. Each stripe's position is measured along the band's centre line, through straight sides and quarter-circle corners alike. The corner radius (about 15 art px outside) is solved so the centre line is exactly 91 stripes of 12 px.
+- **Motion:** the stripes move exactly 2 art pixels per frame, so the motion is perfectly even. The clip loops at 5 s or any multiple of it.
+- **Edge fringe:** where the curved corners meet the green, about 90 edge pixels pick up a 1px colour-bleed fringe from 4:2:0 encoding. A 1px matte choke removes it.
 
 Still to come in this style: INHALE (count of 4), HOLD (count of 3) and EXHALE.
 
