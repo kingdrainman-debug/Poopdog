@@ -62,7 +62,7 @@ In a sandbox where Chromium is preinstalled for a specific Playwright version, p
 
 **Chosen style: 3, the medication label.** It's animated in `src/med_label.js` (film `medlabel`), and `output/med-prompt-label_green_5s.mp4` is a 5 s seamless loop on `#00FF00` at 1080p, 30 fps. Changes from the still:
 
-- **Mark:** "LTX" replaces "Rx". It's sized automatically to fit the widened left column.
+- **Mark:** "LTX" replaces "Rx". It's sized automatically to fit the widened left column, with a small pixel © raised at its top right and the sub-label `d0ll-g4s` under the orange rule.
 - **Barcode number:** `U-R-RBBR-D011`.
 - **Moving border:** the orange-and-black hazard stripes run clockwise around the box like a marquee, flowing unbroken round rounded corners. Each stripe's position is measured along the band's centre line, through straight sides and quarter-circle corners alike. The corner radius (about 15 art px outside) is solved so the centre line is exactly 91 stripes of 12 px.
 - **Motion:** the stripes move exactly 2 art pixels per frame, so the motion is perfectly even. The clip loops at 5 s or any multiple of it.

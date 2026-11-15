@@ -1,5 +1,5 @@
 // med_label.js · the chosen medicine-prompt style (option 3, "medication label"), animated.
-// A pharmacy / gas-canister label with an "LTX" mark, small print and a barcode, inside a rounded hazard
+// A pharmacy / gas-canister label with an "LTX©" mark over a "d0ll-g4s" sub-label, small print and a barcode, inside a rounded hazard
 // border whose orange-and-black stripes run clockwise around the box like a marquee, flowing unbroken round
 // the corners. Keyable: exact #00FF00 background, every pixel opaque.
 // Loop: the border's centre line is exactly 91 stripes round (period 12 px); it moves exactly 2 art pixels per
@@ -26,11 +26,18 @@
 
   function drawStill() {                                        // everything except the moving border
     UI.paint(UI.rrect(X0 + BW - 1, Y0 + BW - 1, W - 2 * BW + 2, H - 2 * BW + 2, Math.max(1, RO - BW + 1)), C.white);
-    const ltx = fit('LTX', AB, DIV - 142 - 8, 50);
-    UI.paint(UI.text('LTX', `${ltx.size}px ${AB}`, 142, 116), C.black);
-    UI.paint(UI.mask(c => c.fillRect(142, 116 + Math.round(ltx.size * 0.86) + 6, Math.round(ltx.w), 4)), C.orange);
+    const ltx = fit('LTX', AB, DIV - 142 - 18, 50), lw = Math.round(ltx.w), lcx = 142 + Math.round(ltx.w / 2);   // leave room for the ©
+    const mark = UI.text('LTX', `${ltx.size}px ${AB}`, 142, 116);
+    let top = 0; while (top < UI.H && !mark.subarray(top * UI.W, (top + 1) * UI.W).some(v => v)) top++;   // cap top of the mark
+    UI.paint(mark, C.black);
+    // small © raised at the top-right of the mark, drawn as a 7×7 pixel glyph
+    const COPY = ['..###..', '.#...#.', '#.###.#', '#.#...#', '#.###.#', '.#...#.', '..###..'];
+    COPY.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === '#') put(142 + lw + 3 + i, top - 2 + j, C.black); }));
+    const rule = 116 + Math.round(ltx.size * 0.86) + 6;
+    UI.paint(UI.mask(c => c.fillRect(142, rule, lw, 4)), C.orange);
+    UI.paint(UI.text('d0ll-g4s', `8px ${PX}`, lcx, rule + 9, 'center'), C.black);   // sub-label under the mark
     UI.paint(UI.mask(c => c.fillRect(DIV, 114, 2, 132)), C.black);
-    UI.paint(plus(142 + Math.round(ltx.w / 2), 214, 14, 8), C.cyan, C.black, 1);
+    UI.paint(plus(lcx, 214, 14, 8), C.cyan, C.black, 1);
     UI.paint(UI.text('PREPARE FOR', `19px ${AB}`, RX, 112), C.black);
     UI.paint(UI.text('YOUR MEDICINE', `19px ${AB}`, RX, 136), C.black);
     UI.paint(UI.mask(c => c.fillRect(RX, 166, 498 - RX, 1)), C.black);
