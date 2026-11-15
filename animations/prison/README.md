@@ -84,3 +84,21 @@ Five candidate styles of the opening prompt are in `directions/med-prompt/` (`al
 | 4 · Respirator HUD | No panel. Floating cyan corner brackets, an orange respirator icon, and outlined sci-fi type. |
 | 5 · Capsule | The prompt printed across a giant half-orange, half-white pill, with a cyan cross badge. |
 
+### Breathing stages (in progress)
+
+After the "prepare" prompt come **INHALE** (count of 4), **HOLD** (count of 3) and **EXHALE**. Each stage carries faux-caring corporate copy:
+
+| Stage | Caring line | Small print |
+|---|---|---|
+| INHALE · 4 | *Breathe in deeply. Your calm is our priority.* | PATIENTS WHO FOLLOW EVERY INSTRUCTION RECOVER SOONER. |
+| HOLD · 3 | *Hold it in. Let the medicine find you.* | MOVEMENT DURING TREATMENT IS A SYMPTOM. STAY STILL. |
+| EXHALE | *Breathe out slowly. Let go of your doubts.* | THANK YOU FOR YOUR COMPLIANCE. LTX CARES. |
+
+Three candidate layouts are in `src/med_breath.js` (film `medbreath`, scenes `br{A,B,C}_{in,hold,out}`). Stills are in `directions/breathing/`, and `all-styles-grid.png` shows all nine. Every card is built from the same parts as the opening prompt (`src/med_common.js`: border, panel, LTX© brand), so the sequence reads as one system.
+
+| Layout | Look |
+|---|---|
+| A · Label continuation | The LTX column stays. The right side shows "STEP n OF 3", the stage word, an orange count tile (a cyan wave tile for exhale) and count pips. |
+| B · Countdown dial | A segmented ring that counts the beats (4 for inhale, 3 for hold, a full cyan ring for exhale), with the brand in a header strip. |
+| C · Step tracker | Three tabs (done steps turn cyan, the current step is orange), a giant count, and a cyan "CARE NOTE" box holding the small print. |
+
