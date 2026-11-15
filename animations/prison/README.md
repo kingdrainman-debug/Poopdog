@@ -102,15 +102,17 @@ Three candidate layouts are in `src/med_breath.js` (film `medbreath`, scenes `br
 | B · Countdown dial | A segmented ring that counts the beats (4 for inhale, 3 for hold, a full cyan ring for exhale), with the brand in a header strip. |
 | C · Step tracker | Three tabs (done steps turn cyan, the current step is orange), a giant count, and a cyan "CARE NOTE" box holding the small print. |
 
-**Chosen: B, the countdown dial, animated.** `output/med-breathing-sequence_green_15s.mp4` is 15 s on `#00FF00` at 1080p, 30 fps, made from `src/med_dial.js` (film `medbreathseq`). Each stage gets 5 s:
+**Chosen: B, the countdown dial, animated.** `output/med-breathing-sequence_green_25s.mp4` is 25 s on `#00FF00` at 1080p, 30 fps, made from `src/med_dial.js` (film `medbreathseq`). Every beat is 1.5 s:
 
 | Time | Stage | Dial |
 |---|---|---|
 | 0–1 s | INHALE, buffer | Empty ring with READY, so the patient can take it all in. |
-| 1–5 s | INHALE | Five segments light orange, one per 0.8 s beat with a brief flash, counting 1 → 5. |
-| 5–10 s | HOLD | The ring resets, then five segments light one per second, counting 1 → 5. |
-| 10–13 s | EXHALE | The full orange ring drains to cyan in one smooth clockwise sweep, counting 5 → 1. |
-| 13–15 s | EXHALE, rest | The ring is fully cyan, with air-flow waves in the centre. |
+| 1–8.5 s | INHALE | Five segments light orange, one per beat with a brief flash, counting 1 → 5. |
+| 8.5–16 s | HOLD | The ring resets, then five segments light one per beat, counting 1 → 5. |
+| 16–23.5 s | EXHALE | The full orange ring drains to cyan in one smooth clockwise sweep, counting 5 → 1, one per beat. |
+| 23.5–25 s | EXHALE, rest | The ring is fully cyan, with air-flow waves in the centre. |
+
+The centre number, READY and the waves are each centred on their real pixel bounding box rather than the font's text box, so they sit dead centre in the ring.
 
 The copy is the client's own:
 
@@ -125,6 +127,6 @@ Build notes:
 - **Card size:** the card is taller than the opening prompt's (406×200 instead of 404×172) to fit the warnings. The border uses `MED.makeFrame` with 96 stripes round, which gives exactly the same corner radius (9.32 px centre line), stripe pitch and speed as the opening label.
 - **Warnings:** each warning has a hazard triangle and an orange "WARNING:" prefix.
 - **Slashed zeros:** zeros in the reassurance and warning lines are drawn with a slash through them, so "D0LL" never reads as "DOLL". The header code and sub-label keep the opening card's plain zeros.
-- **Timing:** counted in whole frames, so beats land exactly. 15 s is a multiple of the border's 5 s cycle, so the clip also loops seamlessly.
+- **Timing:** counted in whole frames, so beats land exactly. 25 s is a multiple of the border's 5 s cycle, so the clip also loops seamlessly.
 - **Stills:** `directions/breathing/final-B-*.png` shows one moment of each stage.
 

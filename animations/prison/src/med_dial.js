@@ -1,12 +1,13 @@
-// med_dial.js · the breathing sequence, layout B ("countdown dial"), animated: 15 s, 5 s per stage.
-//   0–1 s    INHALE  buffer: empty ring, READY, so the patient can take it all in
-//   1–5 s    INHALE  five segments light orange one per beat (0.8 s), count 1 → 5
-//   5–10 s   HOLD    ring resets; five segments light one per second, count 1 → 5
-//   10–13 s  EXHALE  the full orange ring drains to cyan in one smooth clockwise sweep, count 5 → 1
-//   13–15 s  EXHALE  ring fully cyan, calm air-flow waves in the centre
+// med_dial.js · the breathing sequence, layout B ("countdown dial"), animated: 25 s, every beat 1.5 s.
+//   0–1 s      INHALE  buffer: empty ring, READY, so the patient can take it all in
+//   1–8.5 s    INHALE  five segments light orange one per beat, count 1 → 5
+//   8.5–16 s   HOLD    ring resets; five segments light one per beat, count 1 → 5
+//   16–23.5 s  EXHALE  the full orange ring drains to cyan in one smooth clockwise sweep, count 5 → 1 per beat
+//   23.5–25 s  EXHALE  ring fully cyan, calm air-flow waves in the centre
+// The centre number (and READY, and the waves) is centred on its real pixel bounding box, not the font's box.
 // The card is the opening prompt's label, taller (406×200) to fit the warnings, with the same corner radius,
 // stripe pitch and speed (96 stripes round), and the brand in a header strip. Timing is counted in whole frames
-// at 30 fps, so beats land exactly. 15 s is a multiple of the border's 5 s cycle, so the whole clip loops.
+// at 30 fps, so beats land exactly. 25 s is a multiple of the border's 5 s cycle, so the whole clip loops.
 // Keyable: exact #00FF00 background, every pixel opaque, no green-ish colours.
 (() => {
   const { C, PX, AB } = MED;
@@ -45,6 +46,17 @@
 
   // the dial: five segments with black gaps; lit = segments lit in order; drain = fraction swept to cyan
   const CX = 194, CY = 194, RO = 46, RI = 32, SEG = 5, GAP = 0.14;
+  // optical centring: the shift that puts a mask's real pixel bounding box centre on the ring centre
+  function shiftTo(m) {
+    let x0 = UI.W, x1 = -1, y0 = UI.H, y1 = -1;
+    for (let k = 0; k < m.length; k++) if (m[k]) { const x = k % UI.W, y = (k / UI.W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    return { dx: Math.round(CX - (x0 + x1 + 1) / 2), dy: Math.round(CY - (y0 + y1 + 1) / 2) };
+  }
+  function centred(m, col) {
+    const { dx, dy } = shiftTo(m), o = new Uint8Array(m.length);
+    for (let k = 0; k < m.length; k++) if (m[k]) { const x = k % UI.W + dx, y = ((k / UI.W) | 0) + dy; if (x >= 0 && y >= 0 && x < UI.W && y < UI.H) o[y * UI.W + x] = 1; }
+    UI.paint(o, col);
+  }
   function dial({ lit = 0, flash = -1, drain = null, center }) {
     UI.paint(UI.mask(c => { c.beginPath(); c.arc(CX, CY, RO + 1, 0, TAU); c.arc(CX, CY, RI - 1, TAU, 0, true); c.fill(); }), C.black);
     for (let k = 0; k < SEG; k++) {
@@ -53,32 +65,35 @@
       if (drain !== null) UI.paint(seg, (x, y) => { const rel = ((Math.atan2(y + 0.5 - CY, x + 0.5 - CX) + Math.PI / 2) % TAU + TAU) % TAU; return rel < drain * TAU ? C.cyan : C.orange; });
       else UI.paint(seg, k < lit ? (k === flash ? C.orangeL : C.orange) : C.whiteS);
     }
-    if (center.digit) txt(String(center.digit), `38px ${AB}`, CX, CY - 26, C.black, 'center');
-    else if (center.ready) txt('READY', `8px ${PX}`, CX, CY - 4, C.black, 'center');
-    else if (center.waves) waves(CX - 18, CY - 11, 36, C.cyan);
+    if (center.digit) centred(UI.text(String(center.digit), `38px ${AB}`, CX, CY - 26, 'center'), C.black);
+    else if (center.ready) centred(UI.text('READY', `8px ${PX}`, CX, CY - 4, 'center'), C.black);
+    else if (center.waves) {                                         // waves: measure, then redraw shifted
+      const m = UI.mask(c => { c.lineWidth = 2.2; for (let k = 0; k < 3; k++) { c.beginPath(); for (let i = 0; i <= 36; i += 2) { const yy = CY - 11 + k * 11 + 3 * Math.sin(i / 36 * Math.PI * 3 + k); i ? c.lineTo(CX - 18 + i, yy) : c.moveTo(CX - 18 + i, yy); } c.stroke(); } });
+      const { dx, dy } = shiftTo(m); waves(CX - 18 + dx, CY - 11 + dy, 36, C.cyan);
+    }
   }
 
-  // what is on screen at frame fr (0..449)
+  // what is on screen at frame fr (0..749); every beat is 45 frames (1.5 s)
+  const BEAT = 45, BUF = 30, IN0 = BUF, HOLD0 = IN0 + 5 * BEAT, OUT0 = HOLD0 + 5 * BEAT, REST0 = OUT0 + 5 * BEAT, TOTAL = REST0 + 45;
   function stateAt(fr) {
-    if (fr < 150) {                                                   // INHALE: 1 s buffer, then 5 beats of 24 frames
-      if (fr < 30) return { st: STAGES.in, d: { center: { ready: true } } };
-      const k = Math.min(4, Math.floor((fr - 30) / 24));
-      return { st: STAGES.in, d: { lit: k + 1, flash: (fr - 30) - k * 24 < 6 ? k : -1, center: { digit: k + 1 } } };
+    if (fr < HOLD0) {                                                 // INHALE: 1 s buffer, then 5 beats
+      if (fr < IN0) return { st: STAGES.in, d: { center: { ready: true } } };
+      const k = Math.min(4, Math.floor((fr - IN0) / BEAT));
+      return { st: STAGES.in, d: { lit: k + 1, flash: (fr - IN0) - k * BEAT < 6 ? k : -1, center: { digit: k + 1 } } };
     }
-    if (fr < 300) {                                                   // HOLD: 5 beats of 30 frames
-      const k = Math.min(4, Math.floor((fr - 150) / 30));
-      return { st: STAGES.hold, d: { lit: k + 1, flash: (fr - 150) - k * 30 < 6 ? k : -1, center: { digit: k + 1 } } };
+    if (fr < OUT0) {                                                  // HOLD: 5 beats
+      const k = Math.min(4, Math.floor((fr - HOLD0) / BEAT));
+      return { st: STAGES.hold, d: { lit: k + 1, flash: (fr - HOLD0) - k * BEAT < 6 ? k : -1, center: { digit: k + 1 } } };
     }
-    if (fr < 390) {                                                   // EXHALE: 90-frame drain, count 5 → 1
-      const f = (fr - 300) / 90;
-      return { st: STAGES.out, d: { drain: f, center: { digit: 5 - Math.floor((fr - 300) / 18) } } };
+    if (fr < REST0) {                                                 // EXHALE: drain over 5 beats, count 5 → 1
+      return { st: STAGES.out, d: { drain: (fr - OUT0) / (REST0 - OUT0), center: { digit: 5 - Math.floor((fr - OUT0) / BEAT) } } };
     }
     return { st: STAGES.out, d: { drain: 1, center: { waves: true } } };   // EXHALE: rest, all cyan
   }
 
   SCENES['med_breath_seq'] = {
     draw(c, lt) {
-      const fr = ((Math.round(lt * FPS) % 450) + 450) % 450, { st, d } = stateAt(fr);
+      const fr = ((Math.round(lt * FPS) % TOTAL) + TOTAL) % TOTAL, { st, d } = stateAt(fr);
       MED.bg(); F.panel();
       // header strip
       const lw = Math.round(MED.width('LTX', `14px ${AB}`));
