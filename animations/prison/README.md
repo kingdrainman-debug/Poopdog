@@ -60,6 +60,15 @@ In a sandbox where Chromium is preinstalled for a specific Playwright version, p
 
 ## Medicine prompt overlay (in progress)
 
+**Chosen style: 3, the medication label.** It's animated in `src/med_label.js` (film `medlabel`), and `output/med-prompt-label_green_5s.mp4` is a 5 s seamless loop on `#00FF00` at 1080p, 30 fps. Changes from the still:
+
+- **Mark:** "LTX" replaces "Rx". It's sized automatically to fit the widened left column.
+- **Barcode number:** `U-R-RBBR-D011`.
+- **Moving border:** the orange-and-black hazard stripes run clockwise around the box like a marquee: 96 stripes on a 1152 px perimeter, moving exactly 2 art pixels per frame. The motion is perfectly even, and the clip loops at 5 s or any multiple of it.
+- **Corners:** black corner blocks with orange rivets sit where the stripes turn.
+
+Still to come in this style: INHALE (count of 4), HOLD (count of 3) and EXHALE.
+
 A keyable overlay on pure `#00FF00`. It tells the prisoner to prepare for their medicine, an inhaled gas, then counts them through **INHALE** (4), **HOLD** (3) and **EXHALE**.
 
 **Colours:** the prison's black, rust and orange, plus two medical colours: a warm clinical white (`#f3f0e8`) and a sterile azure-cyan (`#4cc9ea` / `#1b8fb5`). The cyan is roughly the complement of orange and well away from the key green. Every pixel is opaque, and no colour is green-ish. Crosses are cyan or orange, never a red cross on white.
