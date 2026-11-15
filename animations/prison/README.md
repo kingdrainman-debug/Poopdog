@@ -84,7 +84,7 @@ Five candidate styles of the opening prompt are in `directions/med-prompt/` (`al
 | 4 · Respirator HUD | No panel. Floating cyan corner brackets, an orange respirator icon, and outlined sci-fi type. |
 | 5 · Capsule | The prompt printed across a giant half-orange, half-white pill, with a cyan cross badge. |
 
-### Breathing stages (in progress)
+### Breathing stages
 
 After the "prepare" prompt come **INHALE** (count of 4), **HOLD** (count of 3) and **EXHALE**. Each stage carries faux-caring corporate copy:
 
@@ -101,4 +101,30 @@ Three candidate layouts are in `src/med_breath.js` (film `medbreath`, scenes `br
 | A · Label continuation | The LTX column stays. The right side shows "STEP n OF 3", the stage word, an orange count tile (a cyan wave tile for exhale) and count pips. |
 | B · Countdown dial | A segmented ring that counts the beats (4 for inhale, 3 for hold, a full cyan ring for exhale), with the brand in a header strip. |
 | C · Step tracker | Three tabs (done steps turn cyan, the current step is orange), a giant count, and a cyan "CARE NOTE" box holding the small print. |
+
+**Chosen: B, the countdown dial, animated.** `output/med-breathing-sequence_green_15s.mp4` is 15 s on `#00FF00` at 1080p, 30 fps, made from `src/med_dial.js` (film `medbreathseq`). Each stage gets 5 s:
+
+| Time | Stage | Dial |
+|---|---|---|
+| 0–1 s | INHALE, buffer | Empty ring with READY, so the patient can take it all in. |
+| 1–5 s | INHALE | Five segments light orange, one per 0.8 s beat with a brief flash, counting 1 → 5. |
+| 5–10 s | HOLD | The ring resets, then five segments light one per second, counting 1 → 5. |
+| 10–13 s | EXHALE | The full orange ring drains to cyan in one smooth clockwise sweep, counting 5 → 1. |
+| 13–15 s | EXHALE, rest | The ring is fully cyan, with air-flow waves in the centre. |
+
+The copy is the client's own:
+
+| Stage | Reassurance | Warning |
+|---|---|---|
+| INHALE · 5 | Breathe in deeply. D0LL G4S is highly effective. | WARNING: D0LL G4S IS DESIGNED TO INDUCE A HIGHLY RECEPTIVE STATE |
+| HOLD · 5 | Hold it in. D0LL G4S Influences brain function. | WARNING: D0LL G4S WILL TURN YOU INTO A MINDLESS PRISONER FOR LTX CORP. |
+| EXHALE | Breathe out slowly. Thank you for your compliance LTX Corp cares. | WARNING: D0LL G4S IS HIGHLY ADDICTIVE. PROGRAMMING IS PERMANENT. |
+
+Build notes:
+
+- **Card size:** the card is taller than the opening prompt's (406×200 instead of 404×172) to fit the warnings. The border uses `MED.makeFrame` with 96 stripes round, which gives exactly the same corner radius (9.32 px centre line), stripe pitch and speed as the opening label.
+- **Warnings:** each warning has a hazard triangle and an orange "WARNING:" prefix.
+- **Slashed zeros:** zeros in the reassurance and warning lines are drawn with a slash through them, so "D0LL" never reads as "DOLL". The header code and sub-label keep the opening card's plain zeros.
+- **Timing:** counted in whole frames, so beats land exactly. 15 s is a multiple of the border's 5 s cycle, so the clip also loops seamlessly.
+- **Stills:** `directions/breathing/final-B-*.png` shows one moment of each stage.
 
