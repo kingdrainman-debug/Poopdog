@@ -18,6 +18,7 @@ These show spiral A on different "screens". Every style uses the same spiral and
 
 | Style | Source | What it adds |
 |---|---|---|
+| A · CRT conditioning screen (the original) | `src/scenes/prison_a.js` | Fine HD pixels, crisp bands, scanlines, a darkened tube edge and a slow refresh bar. |
 | 2 · Surveillance monitor | `src/scenes/prison_surv.js` | Chunky 6×6 pixels, heavy scanlines, grain, a drifting VHS tracking band, and brief signal tears (one at 2.3 s). |
 | 3 · Terminal | `src/scenes/prison_term.js` | An 80×45 orange-phosphor text grid of `COMPLY·OBEY·REST·`. The spiral lights the words, and they stay as a faint ghost in the dark bands. |
 | 5 · Video wall | `src/scenes/prison_wall.js` | A 4×3 bank of CRTs with bezels. Each screen has its own brightness, one runs 0.45 s behind, one has a faulty refresh bar, and one drops to static (first at 3.1 s). |
