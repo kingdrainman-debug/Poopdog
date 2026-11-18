@@ -1,0 +1,218 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Shader harness</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background: #111; color: #ddd; font: 13px system-ui, sans-serif; margin: 12px; }
+  canvas { display: block; margin: 6px 0 14px; background: #000; max-width: 100%; }
+  #log { white-space: pre-wrap; font-family: monospace; }
+</style>
+</head>
+<body>
+<!--
+  Compiles the app's GLSL ES 1.00 shaders (dumped by ShaderDumpTest into
+  build/shader-dump) with WebGL and renders the same pipeline the phone runs:
+  per-eye render into an FBO, then the lens pre-warp pass on a 2400x1080 "phone".
+  Run: ./gradlew testDebugUnitTest && python3 -m http.server, then open
+  http://localhost:8000/tools/shader-harness.html
+-->
+<div id="log"></div>
+<div>Flat 2D→3D cinema (VR, lens-corrected):</div><canvas id="flat" width="2400" height="1080"></canvas>
+<div>180° side-by-side (VR, lens-corrected) with HUD + gaze reticle:</div><canvas id="s180" width="2400" height="1080"></canvas>
+<div>Fisheye 190° side-by-side:</div><canvas id="fish" width="2400" height="1080"></canvas>
+<div>Export shader: 2D → full side-by-side 3D file frame:</div><canvas id="export" width="1280" height="360"></canvas>
+<script>
+const log = (m) => { document.getElementById('log').textContent += m + '\n'; };
+window.harnessErrors = [];
+const fail = (m) => { window.harnessErrors.push(m); log('ERROR: ' + m); };
+
+async function text(p) { const r = await fetch(p); if (!r.ok) throw new Error(p + ' ' + r.status); return r.text(); }
+
+function compile(gl, type, src, name) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) fail(name + ': ' + gl.getShaderInfoLog(s));
+  return s;
+}
+function program(gl, vs, fs, name) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl, gl.VERTEX_SHADER, vs, name + '.vert'));
+  gl.attachShader(p, compile(gl, gl.FRAGMENT_SHADER, fs, name + '.frag'));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) fail(name + ' link: ' + gl.getProgramInfoLog(p));
+  else log('OK ' + name);
+  return p;
+}
+
+// --- tiny column-major mat4 helpers (same conventions as android.opengl.Matrix) ---
+const I = () => [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
+function mul(a, b) { const o = new Array(16).fill(0);
+  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c*4+r] += a[k*4+r] * b[c*4+k]; return o; }
+function translate(x, y, z) { const m = I(); m[12] = x; m[13] = y; m[14] = z; return m; }
+function scale(x, y, z) { const m = I(); m[0] = x; m[5] = y; m[10] = z; return m; }
+function rotY(a) { const m = I(); m[0] = Math.cos(a); m[2] = -Math.sin(a); m[8] = Math.sin(a); m[10] = Math.cos(a); return m; }
+function rotX(a) { const m = I(); m[5] = Math.cos(a); m[6] = Math.sin(a); m[9] = -Math.sin(a); m[10] = Math.cos(a); return m; }
+function frustum(l, r, b, t, n, f) { const m = new Array(16).fill(0);
+  m[0] = 2*n/(r-l); m[5] = 2*n/(t-b); m[8] = (r+l)/(r-l); m[9] = (t+b)/(t-b); m[10] = -(f+n)/(f-n); m[11] = -1; m[14] = -2*f*n/(f-n); return m; }
+
+function testImage(layout) {
+  // Synthetic "video frame": grid + per-eye labels so wrong eye selection is obvious.
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+  const g = c.getContext('2d');
+  const grd = g.createLinearGradient(0, 0, 0, 512); grd.addColorStop(0, '#3a6fd8'); grd.addColorStop(1, '#203018');
+  g.fillStyle = grd; g.fillRect(0, 0, 1024, 512);
+  g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2;
+  for (let x = 0; x <= 1024; x += 64) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 512); g.stroke(); }
+  for (let y = 0; y <= 512; y += 64) { g.beginPath(); g.moveTo(0, y); g.lineTo(1024, y); g.stroke(); }
+  g.font = 'bold 120px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (layout === 'sbs') {
+    g.fillStyle = '#ffd34d'; g.fillText('L', 256, 256); g.fillStyle = '#ff5a7a'; g.fillText('R', 768, 256);
+    g.fillStyle = '#fff'; g.fillRect(508, 0, 8, 512);
+  } else {
+    g.fillStyle = '#ffd34d'; g.fillText('2D', 512, 200);
+    g.fillStyle = '#ffffff'; g.beginPath(); g.arc(512, 400, 60, 0, 7); g.fill();
+  }
+  return c;
+}
+
+function hudImage() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(18,18,26,.85)'; g.beginPath(); g.roundRect(4, 4, 1016, 504, 36); g.fill();
+  g.fillStyle = '#fff'; g.font = 'bold 40px sans-serif'; g.fillText('HUD panel (top)', 40, 62);
+  g.fillStyle = '#ffb347'; g.fillRect(40, 132, 500, 30);
+  for (let i = 0; i < 5; i++) { g.fillStyle = i === 2 ? '#ffb347' : '#2a2a38'; g.fillRect(40 + i * 192, 190, 174, 150); }
+  return c;
+}
+
+function upload(gl, img, flip) {
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, flip);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]])
+    gl.texParameteri(gl.TEXTURE_2D, k, v);
+  return t;
+}
+
+function meshBuffers(gl, m) {
+  const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(m.v), gl.STATIC_DRAW);
+  const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(m.i), gl.STATIC_DRAW);
+  return { vb, ib, n: m.i.length };
+}
+function drawMesh(gl, prog, buf, posSize, stride) {
+  const aPos = gl.getAttribLocation(prog, 'aPosition'), aUv = gl.getAttribLocation(prog, 'aTexCoord');
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf.vb); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buf.ib);
+  gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, posSize, gl.FLOAT, false, stride * 4, 0);
+  gl.enableVertexAttribArray(aUv); gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, stride * 4, posSize * 4);
+  gl.drawElements(gl.TRIANGLES, buf.n, gl.UNSIGNED_SHORT, 0);
+}
+
+async function scene(canvasId, opts, src, meshes) {
+  const gl = document.getElementById(canvasId).getContext('webgl', { preserveDrawingBuffer: true });
+  if (!gl) { fail('no WebGL'); return; }
+  const video = program(gl, src['mesh.vert'], src['video_2d.frag'], canvasId + '/video');
+  const panel = program(gl, src['mesh.vert'], src['panel.frag'], canvasId + '/panel');
+  const ret = program(gl, src['mesh.vert'], src['reticle.frag'], canvasId + '/reticle');
+  const dist = program(gl, src['distort.vert'], src['distort.frag'], canvasId + '/distort');
+  const vtex = upload(gl, testImage(opts.layout), true);
+  const htex = upload(gl, hudImage(), false);
+  const quad = meshBuffers(gl, meshes.quad);
+  const vmesh = meshBuffers(gl, opts.mesh === 'flat' ? meshes.quad : meshes[opts.mesh]);
+  const dL = meshBuffers(gl, meshes.distortL), dR = meshBuffers(gl, meshes.distortR);
+  const S = 1024;
+  const fbos = [0, 1].map(() => {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, S, S, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) fail('fbo incomplete');
+    return { f, t };
+  });
+  const T = meshes.tanHalfFov * 0.1;
+  const proj = frustum(-T, T, -T, T, 0.1, 100);
+  const head = opts.headYaw ? rotY(-opts.headYaw) : I();
+  for (let eye = 1; eye <= 2; eye++) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbos[eye - 1].f); gl.viewport(0, 0, S, S);
+    gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.disable(gl.BLEND);
+    const eyeT = translate(eye === 1 ? meshes.ipd / 2 : -meshes.ipd / 2, 0, 0);
+    let mvp;
+    if (opts.mesh === 'flat') {
+      const d = 4, w = 2 * d * Math.tan(40 * Math.PI / 180), h = w / (1024 / 512);
+      mvp = mul(proj, mul(mul(eyeT, head), mul(translate(0, 0, -d), scale(w, h, 1))));
+    } else mvp = mul(proj, head);
+    gl.useProgram(video);
+    gl.uniformMatrix4fv(gl.getUniformLocation(video, 'uMvp'), false, mvp);
+    gl.uniformMatrix4fv(gl.getUniformLocation(video, 'uTexMatrix'), false, I());
+    const sbs = opts.layout === 'sbs';
+    gl.uniform4f(gl.getUniformLocation(video, 'uEyeRect'), sbs ? (eye === 1 ? 0 : 0.5) : 0, 0, sbs ? 0.5 : 1, 1);
+    gl.uniform1f(gl.getUniformLocation(video, 'uDepth'), opts.depth ? (eye === 1 ? -0.035 : 0.035) * 0.8 : 0);
+    gl.uniform1f(gl.getUniformLocation(video, 'uBrightness'), 1);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, vtex); gl.uniform1i(gl.getUniformLocation(video, 'uTex'), 0);
+    drawMesh(gl, video, vmesh, 3, 5);
+    if (opts.hud) {
+      gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.useProgram(panel);
+      const m = mul(rotX(-0.28), mul(translate(0, 0, -2.4), scale(1.6, 0.8, 1)));
+      gl.uniformMatrix4fv(gl.getUniformLocation(panel, 'uMvp'), false, mul(proj, mul(mul(eyeT, head), m)));
+      gl.uniform1f(gl.getUniformLocation(panel, 'uAlpha'), 1);
+      gl.bindTexture(gl.TEXTURE_2D, htex); gl.uniform1i(gl.getUniformLocation(panel, 'uTex'), 0);
+      drawMesh(gl, panel, quad, 3, 5);
+      gl.useProgram(ret);
+      gl.uniformMatrix4fv(gl.getUniformLocation(ret, 'uMvp'), false, mul(proj, mul(eyeT, mul(translate(0, 0, -2.38), scale(0.09, 0.09, 1)))));
+      gl.uniform1f(gl.getUniformLocation(ret, 'uProgress'), 0.6);
+      drawMesh(gl, ret, quad, 3, 5);
+    }
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, 2400, 1080); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); gl.disable(gl.BLEND);
+  gl.useProgram(dist);
+  [dL, dR].forEach((m, i) => {
+    gl.viewport(i * 1200, 0, 1200, 1080);
+    gl.bindTexture(gl.TEXTURE_2D, fbos[i].t); gl.uniform1i(gl.getUniformLocation(dist, 'uTex'), 0);
+    drawMesh(gl, dist, m, 2, 4);
+  });
+  const err = gl.getError(); if (err) fail(canvasId + ' GL error ' + err);
+}
+
+async function exportTest(src) {
+  const gl = document.getElementById('export').getContext('webgl', { preserveDrawingBuffer: true });
+  const p = program(gl, src['export.vert'], src['export.frag'], 'export');
+  const tex = upload(gl, testImage('mono'), true);
+  const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,0,1, 1,-1,0,1, -1,1,0,1, 1,1,0,1]), gl.STATIC_DRAW);
+  gl.useProgram(p);
+  const a = gl.getAttribLocation(p, 'aFramePosition'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 4, gl.FLOAT, false, 0, 0);
+  gl.uniform1f(gl.getUniformLocation(p, 'uDepth'), 0.035 * 0.8);
+  gl.uniform1f(gl.getUniformLocation(p, 'uInputTb'), 0);
+  gl.uniform1f(gl.getUniformLocation(p, 'uSwap'), 0);
+  gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(gl.getUniformLocation(p, 'uTexSampler'), 0);
+  gl.viewport(0, 0, 1280, 360); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  const err = gl.getError(); if (err) fail('export GL error ' + err);
+}
+
+(async () => {
+  try {
+    const base = '../app/build/shader-dump/';
+    const names = ['mesh.vert', 'video_2d.frag', 'video_oes.frag', 'panel.frag', 'reticle.frag', 'distort.vert', 'distort.frag', 'export.vert', 'export.frag'];
+    const src = {};
+    for (const n of names) src[n] = await text(base + n);
+    const meshes = JSON.parse(await text(base + 'meshes.json'));
+    // The OES shader can't compile in WebGL as-is; check that its body is identical to the 2D variant.
+    const oesBody = src['video_oes.frag'].replace(/^#extension[^\n]*\n/, '').replace('samplerExternalOES', 'sampler2D');
+    if (oesBody !== src['video_2d.frag']) fail('OES and 2D video shaders differ beyond the sampler type');
+    await scene('flat', { mesh: 'flat', layout: 'mono', depth: true }, src, meshes);
+    await scene('s180', { mesh: 'sphere180', layout: 'sbs', hud: true }, src, meshes);
+    await scene('fish', { mesh: 'fisheye190', layout: 'sbs', headYaw: 0.3 }, src, meshes);
+    await exportTest(src);
+  } catch (e) { fail(String(e)); }
+  window.harnessDone = true;
+  log(window.harnessErrors.length ? 'FAILED' : 'ALL SHADERS OK');
+})();
+</script>
+</body>
+</html>
