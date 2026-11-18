@@ -355,8 +355,10 @@ class VrActivity : ComponentActivity() {
         player.prepare()
         player.play()
 
-        val pos = if (queueMode) "${engine.positionInOrder + 1}/${engine.size}  " else ""
-        showToast(listOf("$pos${item.title}", currentFormat.shortLabel + loopSuffix()), 3500)
+        // No "now playing" pop-up: a new video starts with a clean view for immersion
+        // (title and queue position stay available in the control panel). Also clear any
+        // leftover message, e.g. the last second of the "Up next" countdown.
+        renderer.toastVisible = false
         if (queueMode) app.queue.saveResume(item.id, startPositionMs)
     }
 
@@ -401,15 +403,6 @@ class VrActivity : ComponentActivity() {
 
     private fun updateRepeatMode() {
         player.repeatMode = if (engine.shouldRepeatCurrent()) Player.REPEAT_MODE_ONE else Player.REPEAT_MODE_OFF
-    }
-
-    private fun loopSuffix(): String {
-        val total = engine.loopsTotal
-        return when {
-            total == QueueItem.LOOP_FOREVER -> "  ·  Loop ${engine.pass} of ∞"
-            total > 1 -> "  ·  Loop ${engine.pass} of $total"
-            else -> ""
-        }
     }
 
     private val playerListener = object : Player.Listener {

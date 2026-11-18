@@ -6,12 +6,12 @@ ordinary and VR videos into the side‑by‑side, lens‑corrected image a phone
 needs, and plays a **queue of videos hands‑free**, with an optional **loop count per
 video** before moving on to the next.
 
-- **Download:** [`dist/PoopdogVR-1.0.0.apk`](dist/PoopdogVR-1.0.0.apk) (Android 7.0+, ~2.5 MB)
+- **Download:** [`dist/PoopdogVR-1.1.0.apk`](dist/PoopdogVR-1.1.0.apk) (Android 7.0+, ~2.5 MB)
 - **Source:** this folder (Kotlin, Jetpack Compose, Media3/ExoPlayer, OpenGL ES 2.0)
 
 ## Install
 
-1. Copy/download `PoopdogVR-1.0.0.apk` to the phone (or open the file's GitHub page on the phone and tap *Download raw file*).
+1. Copy/download `PoopdogVR-1.1.0.apk` to the phone (or open the file's GitHub page on the phone and tap *Download raw file*).
 2. Open it and allow *Install unknown apps* for your browser/file manager when Android asks.
 3. Open **Poopdog VR**, tap **Allow access** (or **Pick files**) to see your videos.
 
@@ -150,6 +150,13 @@ Without it the release build is signed with the local debug key.
 | `convert/` | Media3 Transformer export to side‑by‑side MP4 |
 | `ui/` | Compose screens: Library, Queue, Settings |
 | `data/` | Settings, queue/playlists, per‑video memory, MediaStore access |
+
+## Changelog
+
+- **1.1.0** — For immersion, videos no longer show a "now playing" pop-up (queue
+  position, file name, format) when they start. The title and position are still in
+  the control panel. Installs over 1.0.0 and keeps your queue and settings.
+- **1.0.0** — First release.
 
 ## Testing status
 

@@ -2,7 +2,7 @@
 
 > **New: Poopdog VR (Android).** A VR video player for phone headsets
 > (Cardboard / VR Box) with a hands-free queue and per-video loop counts. Grab the
-> APK at [`android-vr-player/dist/PoopdogVR-1.0.0.apk`](android-vr-player/dist/PoopdogVR-1.0.0.apk);
+> APK at [`android-vr-player/dist/PoopdogVR-1.1.0.apk`](android-vr-player/dist/PoopdogVR-1.1.0.apk);
 > docs and source in [`android-vr-player/`](android-vr-player/README.md).
 
 Generate rave visuals from a DJ mix in one click.
