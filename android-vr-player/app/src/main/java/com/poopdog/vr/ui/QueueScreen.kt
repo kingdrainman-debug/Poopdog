@@ -354,7 +354,7 @@ private fun QueueHeader(
                     DropdownMenu(expanded = delayMenu, onDismissRequest = { delayMenu = false }) {
                         listOf(0, 1, 2, 3, 5, 10).forEach { v ->
                             DropdownMenuItem(
-                                text = { Text(if (v == 0) "No pause between videos" else "$v s countdown") },
+                                text = { Text(if (v == 0) "No pause between videos" else "$v s pause") },
                                 onClick = { onDelay(v); delayMenu = false },
                             )
                         }

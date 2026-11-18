@@ -72,7 +72,6 @@ class VrRenderer(
     private val head: HeadState,
     private val hud: Hud,
     private val subtitles: TextPanel,
-    private val toast: TextPanel,
     private val xdpi: Float,
     private val ydpi: Float,
     private val densityDpi: Int,
@@ -88,13 +87,11 @@ class VrRenderer(
     @Volatile var hudYaw = 0f
     @Volatile var hudPitch = 0f
     @Volatile var subtitlesVisible = false
-    @Volatile var toastVisible = false
     @Volatile var dwellProgress = 0f
     @Volatile var gazeEnabled = true
 
     val hudDirty = AtomicBoolean(true)
     val subtitlesDirty = AtomicBoolean(false)
-    val toastDirty = AtomicBoolean(false)
 
     /** Gaze position on the HUD in bitmap coordinates (u right, v down), or null. */
     @Volatile var gazeOnHud: FloatArray? = null
@@ -115,7 +112,6 @@ class VrRenderer(
     private var videoTex = 0
     private var hudTex = 0
     private var subTex = 0
-    private var toastTex = 0
 
     private var videoMesh: GlMesh? = null
     private var videoMeshKey: Any? = null
@@ -174,8 +170,7 @@ class VrRenderer(
         videoTex = GlUtil.externalTexture()
         hudTex = GlUtil.texture2d()
         subTex = GlUtil.texture2d()
-        toastTex = GlUtil.texture2d()
-        hudDirty.set(true); subtitlesDirty.set(true); toastDirty.set(true)
+        hudDirty.set(true); subtitlesDirty.set(true)
 
         // A new GL context means all GL objects are gone.
         videoMesh = null; videoMeshKey = null; distortMeshes = null; distortKey = null; eyeFbos = null
@@ -334,9 +329,6 @@ class VrRenderer(
         if (subtitlesVisible) {
             drawPanel(subTex, eyeT, null, 0f, -0.62f, Hud.DISTANCE, 1.8f, 1.8f * 256f / 1024f)
         }
-        if (toastVisible) {
-            drawPanel(toastTex, eyeT, null, 0f, 0.42f, Hud.DISTANCE, 1.6f, 1.6f * 200f / 1024f)
-        }
         if (hudVisible) {
             Matrix.multiplyMM(view, 0, eyeT, 0, headRot, 0)
             val hudQ = Quat.rotY(hudYaw) * Quat.rotX(hudPitch)
@@ -377,7 +369,6 @@ class VrRenderer(
     private fun uploadPanels() {
         if (hudDirty.getAndSet(false)) synchronized(hud.lock) { GlUtil.upload(hudTex, hud.bitmap) }
         if (subtitlesDirty.getAndSet(false)) synchronized(subtitles.lock) { GlUtil.upload(subTex, subtitles.bitmap) }
-        if (toastDirty.getAndSet(false)) synchronized(toast.lock) { GlUtil.upload(toastTex, toast.bitmap) }
     }
 
     /** Intersect the gaze ray (camera forward) with the HUD plane. */

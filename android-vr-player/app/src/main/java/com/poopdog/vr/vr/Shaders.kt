@@ -71,7 +71,7 @@ void main() {
     const val VIDEO_FRAGMENT_2D = PRECISION +
         "uniform sampler2D uTex;\n#define SAMPLE(st) texture2D(uTex, st)\n" + VIDEO_BODY
 
-    /** Bitmap panels (HUD, subtitles, toasts). Bitmaps are uploaded top-row-first. */
+    /** Bitmap panels (HUD, subtitles). Bitmaps are uploaded top-row-first. */
     const val PANEL_FRAGMENT = PRECISION + """
 uniform sampler2D uTex;
 uniform float uAlpha;

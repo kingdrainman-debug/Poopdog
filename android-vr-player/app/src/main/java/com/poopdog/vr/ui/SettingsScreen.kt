@@ -123,7 +123,7 @@ fun SettingsScreen() {
                     LoopStepper(s.defaultLoops, { v -> set { it.copy(defaultLoops = v) } })
                 }
                 SliderRow("Pause between videos", s.autoAdvanceDelaySec.toFloat(), 0f..10f, "${s.autoAdvanceDelaySec} s", steps = 9,
-                    subtitle = "Shows an \"Up next\" countdown in the headset") { v ->
+                    subtitle = "Silent pause; open the menu to see what's next") { v ->
                     set { it.copy(autoAdvanceDelaySec = v.roundToInt()) }
                 }
                 SwitchRow("Resume where you left off", null, s.resumePlayback) { v -> set { it.copy(resumePlayback = v) } }

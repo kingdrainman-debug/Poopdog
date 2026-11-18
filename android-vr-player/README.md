@@ -6,12 +6,12 @@ ordinary and VR videos into the side‑by‑side, lens‑corrected image a phone
 needs, and plays a **queue of videos hands‑free**, with an optional **loop count per
 video** before moving on to the next.
 
-- **Download:** [`dist/PoopdogVR-1.1.0.apk`](dist/PoopdogVR-1.1.0.apk) (Android 7.0+, ~2.5 MB)
+- **Download:** [`dist/PoopdogVR-1.2.0.apk`](dist/PoopdogVR-1.2.0.apk) (Android 7.0+, ~2.5 MB)
 - **Source:** this folder (Kotlin, Jetpack Compose, Media3/ExoPlayer, OpenGL ES 2.0)
 
 ## Install
 
-1. Copy/download `PoopdogVR-1.1.0.apk` to the phone (or open the file's GitHub page on the phone and tap *Download raw file*).
+1. Copy/download `PoopdogVR-1.2.0.apk` to the phone (or open the file's GitHub page on the phone and tap *Download raw file*).
 2. Open it and allow *Install unknown apps* for your browser/file manager when Android asks.
 3. Open **Poopdog VR**, tap **Allow access** (or **Pick files**) to see your videos.
 
@@ -27,8 +27,8 @@ video** before moving on to the next.
 1. Library → **⋮ → Add to queue** (or long‑press to select several → add).
 2. Queue tab → set **Loops** for each video with **−/+** (×1 … ×99, then ∞ = until skipped).
    *⋮ → Set loops for all* applies one count to every video.
-3. Pick **Shuffle**, **Repeat queue**, a **Sleep** timer and the **Gap** (countdown between videos).
-4. **Play queue.** Each video plays its loop count, an "Up next" countdown shows, and the next one starts — no touching needed.
+3. Pick **Shuffle**, **Repeat queue**, a **Sleep** timer and the **Gap** (a silent pause between videos).
+4. **Play queue.** Each video plays its loop count, then the next one starts — no touching needed, and nothing pops up over the video.
    *Resume* continues where you stopped last time.
 
 **In the headset**
@@ -94,7 +94,7 @@ Their shared baseline, and where it lives in this app:
 | Phone‑only (no headset) "magic window" | most | ✅ with pinch zoom |
 | Resume position, playback speed | common | ✅ |
 | Loop **N times** per video then advance | — (rare: apps offer loop‑one/loop‑all only) | ✅ |
-| Sleep timer, "up next" countdown | — | ✅ |
+| Sleep timer, gap between videos | — | ✅ |
 
 Not included (yet): scanning a Cardboard viewer QR code, DLNA/SMB network shares,
 spatial/ambisonic audio, and a VR file browser inside the headset (the queue is built on
@@ -153,6 +153,11 @@ Without it the release build is signed with the local debug key.
 
 ## Changelog
 
+- **1.2.0** — No pop-ups at all during playback: the per-loop "Loop 2 of 3" and the
+  "Up next" countdown messages are gone, and the control panel no longer opens by
+  itself (end of queue, errors, returning to the app). Status such as "Up next in 3 s",
+  "End of queue" or playback errors now shows only inside the control panel when you
+  open it. Installs over 1.0/1.1 and keeps your queue and settings.
 - **1.1.0** — For immersion, videos no longer show a "now playing" pop-up (queue
   position, file name, format) when they start. The title and position are still in
   the control panel. Installs over 1.0.0 and keeps your queue and settings.

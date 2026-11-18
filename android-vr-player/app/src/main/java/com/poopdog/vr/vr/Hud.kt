@@ -215,7 +215,7 @@ class Hud {
     }
 }
 
-/** Head-locked text card (subtitles, toasts, "Up next" banners). */
+/** Head-locked text card (subtitles). */
 class TextPanel(val widthPx: Int, val heightPx: Int, private val fontPx: Float, private val withBackground: Boolean) {
     val lock = Any()
     val bitmap: Bitmap = Bitmap.createBitmap(widthPx, heightPx, Bitmap.Config.ARGB_8888)

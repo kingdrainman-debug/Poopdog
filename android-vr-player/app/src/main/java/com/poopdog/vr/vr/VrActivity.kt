@@ -48,7 +48,7 @@ import kotlin.math.abs
 
 /**
  * Full-screen headset player. Plays a single video or the whole queue hands-free:
- * per-item loop counts, auto-advance with an "Up next" countdown, gaze/dwell controls,
+ * per-item loop counts, auto-advance with an optional silent gap, gaze/dwell controls,
  * Bluetooth remote / gamepad / media keys, look-down menu, sleep timer and resume.
  */
 @OptIn(UnstableApi::class)
@@ -81,6 +81,7 @@ class VrActivity : ComponentActivity() {
 
         private val SPEEDS = floatArrayOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
         private const val TICK_MS = 33L
+        private const val STATUS_UNTIL_NEXT_VIDEO = -1L
     }
 
     private val app by lazy { VrApp.from(this) }
@@ -92,7 +93,6 @@ class VrActivity : ComponentActivity() {
     private lateinit var tracker: HeadTracker
     private val hud = Hud()
     private val subtitlePanel = TextPanel(1024, 256, 46f, withBackground = false)
-    private val toastPanel = TextPanel(1024, 200, 42f, withBackground = true)
     private val gaze = GazeController()
     private val handler = Handler(Looper.getMainLooper())
 
@@ -113,7 +113,12 @@ class VrActivity : ComponentActivity() {
     private var sleepAtEnd = false
     private var lastHudInteraction = 0L
     private var lookDownSince = 0L
-    private var toastUntil = 0L
+    /**
+     * Status line shown only inside the control panel when the user opens it — nothing
+     * ever pops up over the video on its own (maximum immersion).
+     */
+    private var status: String? = null
+    private var statusUntil = 0L
     private var lastHudState: Hud.State? = null
     private var hudBanner: String? = null
     private var lastGazeU = 0f
@@ -121,7 +126,6 @@ class VrActivity : ComponentActivity() {
     /** Step deferred by the "stop after this video" sleep timer; runs on the next Play. */
     private var sleepPendingStep: QueueEngine.Step? = null
     private var videoSurface: Surface? = null
-    private var resumedBefore = false
 
     private val tick = object : Runnable {
         override fun run() {
@@ -150,7 +154,7 @@ class VrActivity : ComponentActivity() {
         gaze.dwellMs = settings.dwellMs.toLong()
 
         val dm = resources.displayMetrics
-        renderer = VrRenderer(headState, hud, subtitlePanel, toastPanel, dm.xdpi, dm.ydpi, dm.densityDpi) { surface ->
+        renderer = VrRenderer(headState, hud, subtitlePanel, dm.xdpi, dm.ydpi, dm.densityDpi) { surface ->
             videoSurface = surface
             if (::player.isInitialized) player.setVideoSurface(surface)
         }
@@ -217,9 +221,6 @@ class VrActivity : ComponentActivity() {
             tracker.displayRotationDeg = displayRotation()
             tracker.start()
             handler.post(tick)
-            // Coming back to a paused video (screen off, app switch): offer the controls.
-            if (resumedBefore && !player.playWhenReady) handler.postDelayed({ showHud(fromLookDown = false) }, 300)
-            resumedBefore = true
         }
     }
 
@@ -355,10 +356,8 @@ class VrActivity : ComponentActivity() {
         player.prepare()
         player.play()
 
-        // No "now playing" pop-up: a new video starts with a clean view for immersion
-        // (title and queue position stay available in the control panel). Also clear any
-        // leftover message, e.g. the last second of the "Up next" countdown.
-        renderer.toastVisible = false
+        // No "now playing" pop-up: title and queue position live in the control panel.
+        status = null
         if (queueMode) app.queue.saveResume(item.id, startPositionMs)
     }
 
@@ -464,7 +463,7 @@ class VrActivity : ComponentActivity() {
         }
 
         override fun onPlayerError(error: PlaybackException) {
-            showToast(listOf("Can't play ${engine.current.title}", error.errorCodeName), 4000)
+            setStatus("Can't play this video (${error.errorCodeName})", STATUS_UNTIL_NEXT_VIDEO)
             val failedId = engine.current.id
             if (settings.skipOnError && engine.size > 1) {
                 handler.postDelayed({
@@ -475,8 +474,6 @@ class VrActivity : ComponentActivity() {
                         else -> onQueueFinished()
                     }
                 }, 3000)
-            } else {
-                showHud(fromLookDown = false)
             }
         }
     }
@@ -490,7 +487,7 @@ class VrActivity : ComponentActivity() {
             player.repeatMode = Player.REPEAT_MODE_OFF
             player.pause()
             sleepPendingStep = step
-            showToast(listOf("Sleep timer", "Stopped after this video"), 6000)
+            setStatus("Sleep timer: stopped after this video", STATUS_UNTIL_NEXT_VIDEO)
             return
         }
         runStep(step, fromRepeat)
@@ -504,7 +501,6 @@ class VrActivity : ComponentActivity() {
                     player.seekTo(0)
                     player.play()
                 }
-                showToast(listOf(engine.current.title, "Loop ${step.pass} of ${loopsText(engine.loopsTotal)}"), 2500)
             }
             is QueueEngine.Step.Play -> {
                 if (fromRepeat) {
@@ -523,8 +519,8 @@ class VrActivity : ComponentActivity() {
         finishedQueue = true
         player.pause()
         if (queueMode) app.queue.saveResume(null, 0)
-        showToast(listOf(if (queueMode) "End of queue" else "Finished", "Look at Play to start again"), 6000)
-        showHud(fromLookDown = false)
+        setStatus(if (queueMode) "End of queue: press Play to start again" else "Finished: press Play to watch again",
+            STATUS_UNTIL_NEXT_VIDEO)
     }
 
     private fun scheduleAdvance(index: Int) {
@@ -570,7 +566,7 @@ class VrActivity : ComponentActivity() {
         if (startPendingNow()) return
         when (val step = engine.next()) {
             is QueueEngine.Step.Play -> startItem(step.index)
-            else -> showToast(listOf("End of queue"), 2000)
+            else -> setStatus("End of queue", 3000)
         }
     }
 
@@ -599,7 +595,7 @@ class VrActivity : ComponentActivity() {
         val loops = engine.adjustCurrentLoops(delta)
         updateRepeatMode()
         if (queueMode) app.queue.replaceItem(engine.current)
-        showToast(listOf("Loops: ${loopsText(loops)}", "Now on pass ${engine.pass}"), 2000)
+        setStatus("Loops: ${loopsText(loops)}  ·  now on pass ${engine.pass}", 3000)
         lastHudState = null
     }
 
@@ -611,20 +607,17 @@ class VrActivity : ComponentActivity() {
         engine.replaceCurrent(item.copy(format = currentFormat))
         if (queueMode) app.queue.replaceItem(engine.current)
         applyRenderConfig()
-        showToast(listOf("Format", currentFormat.shortLabel), 2000)
     }
 
     private fun cycleSpeed() {
         speedIndex = (speedIndex + 1) % SPEEDS.size
         player.setPlaybackSpeed(SPEEDS[speedIndex])
-        showToast(listOf("Speed ${Hud.trimSpeed(SPEEDS[speedIndex])}x"), 1500)
         lastHudState = null
     }
 
     private fun recenter() {
         headState.recenterNow(settings.recenterFull)
         if (renderer.hudVisible) placeHud(fromLookDown = false)
-        showToast(listOf("Recentered"), 1200)
     }
 
     private fun perform(b: Hud.Button) {
@@ -682,12 +675,10 @@ class VrActivity : ComponentActivity() {
         return hud.hitTest(g[0], g[1])
     }
 
-    private fun showToast(lines: List<String>, durationMs: Long) {
-        if (toastPanel.draw(lines)) {
-            renderer.toastDirty.set(true)
-            renderer.toastVisible = true
-            toastUntil = SystemClock.uptimeMillis() + durationMs
-        }
+    private fun setStatus(text: String, durationMs: Long) {
+        status = text
+        statusUntil = if (durationMs == STATUS_UNTIL_NEXT_VIDEO) Long.MAX_VALUE else SystemClock.uptimeMillis() + durationMs
+        lastHudState = null
     }
 
     private fun onTick() {
@@ -716,14 +707,13 @@ class VrActivity : ComponentActivity() {
             } else lookDownSince = 0L
         }
 
-        // Auto-advance countdown.
+        // Auto-advance after the gap (shown only in the control panel's status line).
         pendingIndex?.let { idx ->
             val left = ((countdownEndsAt - now + 999) / 1000).toInt()
             if (left <= 0) {
                 startItem(idx)
             } else {
-                hudBanner = "Up next in ${left}s: ${engine.item(idx).title}"
-                showToast(listOf("Up next in ${left}s", engine.item(idx).title + loopsNote(idx)), 1500)
+                hudBanner = "Up next in ${left}s: ${engine.item(idx).title}${loopsNote(idx)}"
             }
         }
 
@@ -736,10 +726,8 @@ class VrActivity : ComponentActivity() {
                 pendingIndex = null
                 sleepPendingStep = QueueEngine.Step.Play(idx)
             }
-            showToast(listOf("Sleep timer", "Playback stopped"), 8000)
+            setStatus("Sleep timer: playback stopped", STATUS_UNTIL_NEXT_VIDEO)
         }
-
-        if (renderer.toastVisible && now > toastUntil) renderer.toastVisible = false
 
         if (renderer.hudVisible) redrawHud(hovered)
     }
@@ -771,7 +759,11 @@ class VrActivity : ComponentActivity() {
             formatLabel = currentFormat.shortLabel,
             speed = SPEEDS[speedIndex],
             loopLabel = "${engine.pass}/${loopsText(engine.loopsTotal)}",
-            banner = if (pendingIndex != null) hudBanner else null,
+            banner = when {
+                pendingIndex != null -> hudBanner
+                status != null && SystemClock.uptimeMillis() < statusUntil -> status
+                else -> null
+            },
         )
         if (state != lastHudState) {
             hud.draw(state)
