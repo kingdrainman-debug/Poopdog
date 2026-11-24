@@ -65,18 +65,24 @@
   const gs = (u, v, su, sv) => Math.exp(-((u / su) ** 2) - ((v / sv) ** 2));
   const cap = (a, b) => { const r = a * a + b * b; return r < 1 ? Math.sqrt(1 - r) : 0; };   // a low spherical cap: crisp crescent highlights
   const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+  // the bust: a long, smooth slope down from the upper chest and a short, defined curve underneath
+  const bust = (a, dv) => { const b = dv < 0 ? dv / 36 : dv / 24, r = a * a + b * b; if (r >= 1) return 0;
+    return Math.pow(1 - r, 0.5 + 1.5 * sstep(0.2, -0.7, b)); };
   function partMask(cx, y0, s, draw) { return UI.mask(g => { g.translate(cx, y0); g.scale(s, s); g.beginPath(); draw(g); g.fill(); }); }
-  const HEAD = g => { g.moveTo(0, 0); g.bezierCurveTo(30, 0, 47, 20, 47, 52); g.bezierCurveTo(47, 70, 44, 84, 38, 96); g.bezierCurveTo(30, 110, 16, 124, 0, 124);
-    g.bezierCurveTo(-16, 124, -30, 110, -38, 96); g.bezierCurveTo(-44, 84, -47, 70, -47, 52); g.bezierCurveTo(-47, 20, -30, 0, 0, 0); };
-  const BODY = lift => g => { g.moveTo(-23, 100); g.lineTo(-24, 134); g.bezierCurveTo(-26, 150, -40, 160 - lift, -62, 167 - lift); g.bezierCurveTo(-76, 171 - lift, -86, 178 - lift, -90, 192 - lift);
-    g.lineTo(-84, 240); g.lineTo(-82, 420); g.lineTo(82, 420); g.lineTo(84, 240);
-    g.lineTo(90, 192 - lift); g.bezierCurveTo(86, 178 - lift, 76, 171 - lift, 62, 167 - lift); g.bezierCurveTo(40, 160 - lift, 26, 150, 24, 134); g.lineTo(23, 100); };
-  const ARM = (sx, lift) => g => { g.moveTo(sx * 60, 170 - lift); g.bezierCurveTo(sx * 88, 168 - lift, sx * 104, 186 - lift, sx * 105, 222 - lift * 0.5); g.lineTo(sx * 108, 420);
-    g.lineTo(sx * 80, 420); g.lineTo(sx * 80, 252); g.bezierCurveTo(sx * 80, 222, sx * 78, 196, sx * 60, 170 - lift); };
-  const reliefHead = (u, v) => 4 * gs(u, v - 47, 30, 7) - 4 * gs(Math.abs(u) - 17, v - 58, 10, 7) + 7 * gs(u, v - 73, 5, 12)
-    + 4 * gs(Math.abs(u) - 25, v - 76, 10, 9) + 4 * gs(u, v - 116, 13, 6);
-  const reliefBody = (u, v, lift, breath) => 3 * gs(Math.abs(u) - 32, v - (180 - lift + Math.abs(u) * 0.1), 20, 3.5)
-    + (8 + 2 * breath) * cap((Math.abs(u) - 37) / 33, (v - 304) / 30);
+  // Proportions follow a feminine figure: a smaller, tapered jaw and soft features, a long slender neck, narrow
+  // sloping shoulders, slim arms, a ribcage that narrows towards the waist (the gap between arm and waist opens at the
+  // bottom of frame), and the bust at its natural height, about two head-heights down from the crown.
+  const HEAD = g => { g.moveTo(0, 0); g.bezierCurveTo(29, 0, 45, 19, 45, 50); g.bezierCurveTo(45, 68, 42, 82, 35, 96); g.bezierCurveTo(27, 110, 14, 123, 0, 123);
+    g.bezierCurveTo(-14, 123, -27, 110, -35, 96); g.bezierCurveTo(-42, 82, -45, 68, -45, 50); g.bezierCurveTo(-45, 19, -29, 0, 0, 0); };
+  const BODY = lift => g => { g.moveTo(-21, 100); g.lineTo(-22, 134); g.bezierCurveTo(-24, 150, -38, 159 - lift, -60, 166 - lift); g.bezierCurveTo(-73, 170 - lift, -82, 177 - lift, -86, 192 - lift);
+    g.lineTo(-84, 240); g.bezierCurveTo(-82, 290, -72, 330, -70, 380); g.lineTo(-70, 420); g.lineTo(70, 420); g.lineTo(70, 380); g.bezierCurveTo(72, 330, 82, 290, 84, 240);
+    g.lineTo(86, 192 - lift); g.bezierCurveTo(82, 177 - lift, 73, 170 - lift, 60, 166 - lift); g.bezierCurveTo(38, 159 - lift, 24, 150, 22, 134); g.lineTo(21, 100); };
+  const ARM = (sx, lift) => g => { g.moveTo(sx * 58, 170 - lift); g.bezierCurveTo(sx * 84, 167 - lift, sx * 98, 184 - lift, sx * 99, 220 - lift * 0.5); g.lineTo(sx * 100, 420);
+    g.lineTo(sx * 80, 420); g.lineTo(sx * 79, 252); g.bezierCurveTo(sx * 79, 222, sx * 76, 196, sx * 58, 170 - lift); };
+  const reliefHead = (u, v) => 2.5 * gs(u, v - 46, 28, 6) - 4 * gs(Math.abs(u) - 16, v - 56, 9, 6) + 5 * gs(u, v - 71, 4, 10)
+    + 5 * gs(Math.abs(u) - 23, v - 70, 10, 8) + 3 * gs(u, v - 114, 10, 5);
+  const reliefBody = (u, v, lift, breath) => 2.5 * gs(Math.abs(u) - 30, v - (180 - lift + Math.abs(u) * 0.1), 18, 3.5)
+    + (8 + 1.5 * breath) * bust((Math.abs(u) - 35) / 31, (v - 256 + lift * 0.5));
   function vessel({ cx, y0, s, breath = 0.5, gas = 0.4, plume = 0 }) {
     const col = new Array(N).fill(null), L = new Float32Array(N), heat = new Float32Array(N);
     const lift = breath * 3, br = Math.max(1, Math.round(2 * s));
@@ -103,42 +109,50 @@
         const nh = Math.max(0, n[0] * HV2[0] + n[1] * HV2[1] + n[2] * HV2[2]);
         const spec = Math.pow(nh, 60) + 0.06 * Math.pow(nh, 12), dif = Math.max(0, n[0] * LK2[0] + n[1] * LK2[1] + n[2] * LK2[2]) * 0.1;
         const edge = clamp(1 - (dAll[i] - 0.5) / rimW), side = n[0] / (Math.hypot(n[0], n[1]) || 1);
-        const rimC = edge * clamp((side - 0.1) * 1.6), rimO = edge * clamp((-side - 0.1) * 1.6);
+        const uu = (x + 0.5 - cx) / s;                                     // rims only on the outward-facing sides
+        const rimC = edge * clamp((side - 0.1) * 1.6) * clamp(uu / 10 + 0.5), rimO = edge * clamp((-side - 0.1) * 1.6) * clamp(-uu / 10 + 0.5);
         const j = (bayer(x, y) - 0.5) * 0.08;
         let c = spec + j > 0.55 ? C.white : spec + j > 0.3 ? C.whiteS : spec + j > 0.13 ? C.grey
           : rimC + j > 0.62 ? C.cyan : rimC + j > 0.3 ? C.cyanD : rimO + j > 0.62 ? C.orange : rimO + j > 0.3 ? C.orangeD : dif + spec > 0.075 ? GLOSS : C.black;
         if (d[i] < 1.3 && dAll[i] > 1.5) c = C.black;                  // a dark crease where one part overlaps another
         const hot = P.hot ? P.hot((x + 0.5 - cx) / s, (y + 0.5 - y0) / s) : 0;
-        col[i] = c; L[i] = lum(c); heat[i] = P.h - 0.14 + 0.06 * n[2] + 0.22 * Math.sqrt(clamp(dAll[i] / (22 * s))) + hot;
+        col[i] = c; L[i] = lum(c); heat[i] = P.h - 0.22 + 0.16 * n[2] + 0.2 * Math.sqrt(clamp(dAll[i] / (22 * s))) + hot;   // faces turned to the camera read warmer
       }
     });
-    // breathing tube: Catmull-Rom samples with arc length, drawn in front
-    const TP = [[10, 104], [28, 118], [56, 150], [84, 200], [100, 262], [108, 380]].map(([u, v]) => [cx + u * s, y0 + v * s]);
+    // breathing tube: a corrugated hose (Catmull-Rom samples with arc length) that plugs into the respirator valve with
+    // a metal cuff, runs over the right shoulder and down the arm. A pulse of orange gas travels up it.
+    const VC = [cx, y0 + 100 * s];
+    const TP = [[2, 104], [18, 120], [42, 144], [68, 176], [88, 232], [96, 380]].map(([u, v]) => [cx + u * s, y0 + v * s]);
     const tpts = [];
     for (let k = 0; k < TP.length - 1; k++) {
       const p0 = TP[Math.max(0, k - 1)], p1 = TP[k], p2 = TP[k + 1], p3 = TP[Math.min(TP.length - 1, k + 2)];
       for (let t = 0; t < 1; t += 0.01) { const t2 = t * t, t3 = t2 * t, f = (a, b, c2, d) => 0.5 * (2 * b + (-a + c2) * t + (2 * a - 5 * b + 4 * c2 - d) * t2 + (-a + 3 * b - 3 * c2 + d) * t3);
         tpts.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]); }
     }
-    const tS = new Float32Array(N).fill(-1), tW = new Float32Array(N), tD = new Float32Array(N).fill(1e9), R = 8.5 * s;
-    let len = 0;
+    const tS = new Float32Array(N).fill(-1), tW = new Float32Array(N), tD = new Float32Array(N).fill(1e9), R = 7 * s, RC = R * 1.3;
+    let len = 0, cuff0 = -1;
     for (let k = 0; k < tpts.length; k++) {
       if (k) len += Math.hypot(tpts[k][0] - tpts[k - 1][0], tpts[k][1] - tpts[k - 1][1]);
       const [px, py] = tpts[k], nx = k < tpts.length - 1 ? tpts[k + 1][0] - px : 1, ny = k < tpts.length - 1 ? tpts[k + 1][1] - py : 0, nl = Math.hypot(nx, ny) || 1;
-      for (let y = Math.floor(py - R - 1); y <= py + R + 1; y++) for (let x = Math.floor(px - R - 1); x <= px + R + 1; x++) {
+      if (cuff0 < 0 && Math.hypot(px - VC[0], py - VC[1]) > 10 * s) cuff0 = len;          // where the hose leaves the valve rim
+      for (let y = Math.floor(py - RC - 1); y <= py + RC + 1; y++) for (let x = Math.floor(px - RC - 1); x <= px + RC + 1; x++) {
         if (x < 0 || y < 0 || x >= W || y >= H) continue;
         const dx = x + 0.5 - px, dy = y + 0.5 - py, d = Math.hypot(dx, dy), i = y * W + x;
-        if (d <= R && d < tD[i]) { tD[i] = d; tS[i] = len; tW[i] = (dx * (-ny / nl) + dy * (nx / nl)) / R; }
+        if (d <= RC && d < tD[i]) { tD[i] = d; tS[i] = len; tW[i] = (dx * (-ny / nl) + dy * (nx / nl)) / R; }
       }
     }
-    const gasS = len * (1 - gas);
+    const C0 = cuff0 - 2 * s, C1 = cuff0 + 6 * s, gasS = len * (1 - gas), cuffPx = [];
+    const inCuff = ss => ss >= C0 && ss <= C1;
     for (let i = 0; i < N; i++) {
       if (tS[i] < 0) continue;
-      const w = tW[i], ss = tS[i], rib = Math.floor(ss / (6 * s)) & 1;
-      const l = 0.25 + 0.55 * clamp(-w * 0.8 + 0.35) - (rib ? 0.14 : 0);
-      let c = l > 0.62 ? C.whiteS : l > 0.42 ? C.grey : l > 0.24 ? GREYD : INK, h = 0.3;
-      if (Math.abs(ss - gasS) < 12 * s) { c = Math.abs(ss - gasS) < 6 * s ? C.orangeL : C.orange; h = 0.95; }
-      if (Math.abs(w) > 0.86) c = C.black;
+      const w = tW[i], ss = tS[i];
+      if (inCuff(ss)) { cuffPx.push(i); continue; }                      // painted after the valve, so it overlaps the rim
+      if (Math.abs(w) > 1) continue;
+      const groove = ((ss / (4.5 * s)) % 1) < 0.3;
+      let l = 0.32 + 0.5 * Math.exp(-(((w + 0.35) / 0.32) ** 2)) - 0.12 * Math.max(0, w) - (groove ? 0.12 : 0);
+      let c = l > 0.68 ? C.whiteS : l > 0.48 ? C.grey : l > 0.27 ? GREYD : INK, h = 0.3;
+      if (Math.abs(ss - gasS) < 12 * s) { c = groove ? C.orangeD : l > 0.45 ? C.orangeL : C.orange; h = 0.95; }
+      if (Math.abs(w) > 0.88) c = C.black;
       col[i] = c; L[i] = lum(c); heat[i] = h;
     }
     // respirator valve on the lower face
@@ -149,13 +163,20 @@
       else { c = INK; for (const k of [-4, 0, 4]) if (Math.abs(v - 100 - k) < 1.2 && Math.abs(u) < 6) c = C.black; }
       col[i] = c; L[i] = lum(c); heat[i] = 0.86;
     }
+    for (const i of cuffPx) {                                            // the metal cuff joining hose and valve
+      const w = tW[i], ss = tS[i], wc = w * R / RC;
+      let l = 0.5 + 0.4 * Math.exp(-(((wc + 0.3) / 0.4) ** 2)) - 0.18 * Math.max(0, wc);
+      let c = l > 0.72 ? C.whiteS : l > 0.5 ? C.grey : GREYD;
+      if (Math.abs(wc) > 0.9 || ss - C0 < 1.2 || C1 - ss < 1.2) c = C.black;
+      col[i] = c; L[i] = lum(c); heat[i] = 0.4;
+    }
     // orange barcode on the sternum, with the name under it
-    const bx = cx - 30 * s, by = y0 + 222 * s;
+    const bx = cx - 30 * s, by = y0 + 190 * s;
     for (let k = 0, x = bx; k < 12; k++) {
-      const w = Math.max(1, Math.round((1 + (k * 5) % 3) * s)); for (let yy = Math.round(by); yy < by + 22 * s; yy++) for (let xx = Math.round(x); xx < Math.round(x) + w; xx++) { const i = yy * W + xx; if (col[i]) { col[i] = C.orange; L[i] = lum(C.orange); heat[i] -= 0.06; } }
+      const w = Math.max(1, Math.round((1 + (k * 5) % 3) * s)); for (let yy = Math.round(by); yy < by + 16 * s; yy++) for (let xx = Math.round(x); xx < Math.round(x) + w; xx++) { const i = yy * W + xx; if (col[i]) { col[i] = C.orange; L[i] = lum(C.orange); heat[i] -= 0.06; } }
       x += w + Math.max(1, Math.round((1 + (k % 2)) * s));
     }
-    const nm = UI.text('RUBBERDOLL', `8px ${PX}`, cx, by + 26 * s, 'center');
+    const nm = UI.text('RUBBERDOLL', `8px ${PX}`, cx, Math.round(by + 16 * s + 3), 'center');
     for (let i = 0; i < N; i++) if (nm[i] && col[i]) { col[i] = C.orangeD; L[i] = lum(C.orangeD); }
     // warm breath around the valve, with wisps rising (thermal view)
     if (plume > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {

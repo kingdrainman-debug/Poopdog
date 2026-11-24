@@ -246,10 +246,12 @@ A chest-up, dark breathing loop of the new RUBBERDOLL (the LTX vessel after the 
 
 The figure is shared by every concept:
 
-- **Build:** each body part (head, neck and torso, two arms) is a hand-drawn outline inflated into a rounded form with a distance transform. Subtle relief is sculpted in, with a face pressed up under the latex (brow, eye hollows, nose, cheekbones, chin), collarbones, and the chest's curve. The height field is softened before lighting.
-- **Lighting:** a sharp key from the upper left gives crisp latex highlights. Cyan (right) and warm orange (left) rim lights follow only the outer silhouette.
-- **Details:** a respirator valve on the lower face, a ribbed tube over the right shoulder carrying the orange gas pulse, and the orange barcode with RUBBERDOLL on the upper chest.
-- **Animation hooks:** `breath` lifts the shoulders and swells the chest; `gas` moves the pulse along the tube.
+- **Proportions:** clearly feminine. The head is smaller with a tapered jaw and soft features. The neck is long and slender, the shoulders narrow and sloping, and the arms slim. The ribcage narrows towards the waist, so a gap opens between arm and waist at the bottom of frame. The bust sits at its natural height, about two head-heights below the crown: a long smooth slope from the upper chest and a short, defined curve underneath.
+- **Build:** each body part (head, neck and torso, two arms) is a hand-drawn outline inflated into a rounded form with a distance transform. Subtle relief is sculpted in, with a face pressed up under the latex (brow, eye hollows, nose, cheekbones, chin). The height field is softened before lighting.
+- **Lighting:** a sharp key from the upper left gives crisp latex highlights. Cyan (right) and warm orange (left) rim lights follow only the outward-facing edges of the silhouette.
+- **Breathing hose:** a corrugated grey hose plugs into the respirator valve with a metal cuff, so it visibly connects at the mouth. It runs over the right shoulder and down the arm, carrying the orange gas pulse.
+- **Markings:** the orange barcode with RUBBERDOLL sits high on the chest, below the collarbones.
+- **Animation hooks:** `breath` lifts the shoulders and swells the chest; `gas` moves the pulse along the hose.
 
 | Concept | Look | Keyable |
 |---|---|---|
@@ -257,4 +259,4 @@ The figure is shared by every concept:
 | 2 · Bio-monitor | Figure beside live vitals: respiration 6/MIN waveform, D0LL G4S saturation 87%, ECG 48, a flat SUPPRESSED neural line, STATUS: COMPLIANT | no |
 | 3 · Containment window | Behind a riveted viewing window (VESSEL 0412) with orange gas rising from below, glass streaks, a hazard sill, "RUBBERDOLL - CONTENTS COMPLIANT" | no |
 | 4 · CRT monitor prop | A pixel-art security monitor on `#00FF00` showing the amber feed. The CRT pass is limited to the screen; green checked clean | yes |
-| 5 · Thermal camera | Heat palette: warm face and neck, cooler arms and edges, cold tube with a hot gas pulse, breath plume at the valve, crosshair, 40C–18C scale, CORE / RESP / STATUS DORMANT | no |
+| 5 · Thermal camera | Heat palette: warm face and neck, cooler arms and edges, surfaces facing the camera warmer (so the form reads), cold tube with a hot gas pulse, breath plume at the valve, crosshair, 40C–18C scale, CORE / RESP / STATUS DORMANT | no |
