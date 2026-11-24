@@ -184,3 +184,27 @@ The figures are two androgynous front-on busts:
 
 All flashing stays at or under 2.5 flashes per second, measured on the rendered frames, which is inside the 3-per-second photosensitivity guideline.
 
+### Independence detected (current section 1)
+
+`output/resistance-alert/1A_terminal_independence-detected_12s.mp4` (made from `src/independence.js`, film `independence`) replaces the resistance version of the terminal. It runs 12 s, slow and deliberate:
+
+1. The CRT powers on.
+2. Nine readouts print one by one: the label types, a dotted leader scans, then the value stamps in.
+
+   | Readout | Value |
+   |---|---|
+   | SUBJECT: RUBBERDOLL | U-R-RBBR-D011 |
+   | SUSCEPTIBILITY | HIGH |
+   | AROUSAL | HIGH |
+   | SUGGESTIBILITY | 94% |
+   | CRITICAL THINKING | 31% |
+   | MEMORY COHESION | DEGRADED |
+   | CONSCIENCE INTEGRITY | FAIL |
+   | COMPLIANCE INDEX | 12% |
+   | INDEPENDENT THOUGHT | PRESENT |
+
+3. The red **INDEPENDENCE DETECTED** bar blinks, then settles.
+4. **ACTION TAKEN: MIND TRANSFER** flashes for the last 3 seconds. It alternates between orange on black and black on orange, so it stays readable in both states.
+
+The transfer itself isn't shown here; it comes later as its own menu. Flashing measures at most 2 per second on the rendered frames, and the green is untouched.
+
