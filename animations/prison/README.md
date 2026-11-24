@@ -150,3 +150,19 @@ Both medicine overlays also come as a CRT-TV render (`src/crt.js`, switched on b
 
 The clean versions without the CRT pass are kept alongside.
 
+## Resistance alert pop-up (in progress)
+
+A keyable "RESISTANCE DETECTED — EMPLOYING CORRECTIONAL MIND TRANSFER" interrupt, built from the medicine overlays' parts (palette, label frame, LTX brand) with the CRT pass, plus one alarm-red accent (`#e8322a`). Every pixel is opaque, and no colour is green-ish.
+
+Five candidate styles are in `src/alert_styles.js` (film `alerts`, scenes `al_1`…`al_5`). Stills are in `directions/resistance-alert/`, and `all-five-styles.png` shows them side by side.
+
+| Style | Look |
+|---|---|
+| 1 · System alert dialog | A retro operating-system pop-up with an orange title bar, hazard icon, striped transfer bar, and only two choices: ACCEPT and ACCEPT. |
+| 2 · Inverted hazard label | The medication label in alarm mode: black panel, orange type, a brain icon with cyan "transfer" chevrons, inside the running hazard border. |
+| 3 · Emergency broadcast banner | A full-width black strip with hazard tape above and below, a red alarm disc, a LIVE badge, and a ticker ("DO NOT RESIST // THIS IS FOR YOUR OWN GOOD // LTX CARES"). |
+| 4 · Mind-transfer diagram | A white label showing the subject's head beaming data into an orange LTX head, with a transfer bar. |
+| 5 · Terminal error | A black console printing the diagnosis (CONSCIENCE INTEGRITY: FAIL, COMPLIANCE INDEX: 12%), a red RESISTANCE DETECTED bar, a transfer bar and a cursor. |
+
+`src/med_common.js`: `makeFrame(...).panel(col)` now takes a fill colour, defaulting to white. The existing labels render unchanged.
+

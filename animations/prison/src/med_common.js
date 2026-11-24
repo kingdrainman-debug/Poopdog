@@ -48,7 +48,7 @@ window.MED = (() => {
     const P = 12, LOOP = 5, SPEED = 25 * P / LOOP;                         // 60 px/s = 2 px per frame; 25 stripes per 5 s
     const RM = (2 * (W + H - 2 * BW) - P * N) / (8 - 2 * Math.PI), RO = RM + BW / 2;   // centre-line and outer radius
     const A = W - 2 * RO, B = H - 2 * RO, Q = Math.PI / 2 * RM;            // straight lengths, quarter-arc length
-    const panel = () => UI.paint(UI.rrect(X0 + BW - 1, Y0 + BW - 1, W - 2 * BW + 2, H - 2 * BW + 2, Math.max(1, RO - BW + 1)), C.white);
+    const panel = (col = C.white) => UI.paint(UI.rrect(X0 + BW - 1, Y0 + BW - 1, W - 2 * BW + 2, H - 2 * BW + 2, Math.max(1, RO - BW + 1)), col);
     function border(lt) {
       const off = Math.round(SPEED * lt);                                 // whole pixels: an even 2 px every frame
       const ax0 = X0 + RO, ax1 = X1 - RO, ay0 = Y0 + RO, ay1 = Y1 - RO; // corner-circle centres
