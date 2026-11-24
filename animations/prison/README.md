@@ -210,20 +210,32 @@ The transfer itself isn't shown here; it comes later as its own menu. Flashing m
 
 ## Mind-transfer menu
 
-`output/mind-transfer/mind-transfer_scan-and-dissolve_10s.mp4` is made from `src/mind_transfer.js` (film `mindtransfer`), on `#00FF00` with the CRT pass. It's the scan-and-dissolve version with these changes:
+`output/mind-transfer/mind-transfer_scan-and-dissolve_15s.mp4` is made from `src/mind_transfer.js` (film `mindtransfer`), on `#00FF00` with the CRT pass.
 
 - **Card:** a taller label (406×224, 100 stripes round, with the same corner radius as every other label), headed **MIND TRANSFER**.
 - **Framing:** both figures run head to hips with arms at their sides.
 - **Subject RUBBERDOLL:** a featureless, profile-picture-style blank head (no eyes, mouth or hair) on an orange jumpsuit with a zip and a 0412 patch.
 - **LTX vessel:** a clearly female figure, drawn as a clean, mannequin-like diagram, in a shiny black full-body suit. Each horizontal span of the silhouette is shaded on its own, giving glossy highlight bands and a cool rim light. It has an orange barcode on the upper chest and an orange padlock at hip level.
+- **Breathing tube:** a ribbed hose runs from a valve on the lower face, over the right shoulder and down the outside of the arm. A pulse of orange gas travels up it every 2.5 s.
 
-The sequence:
+The sequence runs 15 s at 30 fps:
 
-1. A scan line sweeps the subject.
-2. The subject dissolves top-down into pixels that arc across and fill the vessel from the hips up, so the padlock appears early.
-3. The status reads COPYING MEMORIES… OVERWRITING IDENTITY… INSTALLING OBEDIENCE…
-4. The barcode prints.
-5. The labels swap: the subject becomes VACANT and the vessel becomes RUBBERDOLL.
+1. 0–1.5 s: a scan line sweeps the subject.
+2. 1.5–12.8 s: the subject dissolves top-down into pixels that arc across and fill the vessel from the hips up, so the padlock appears early.
+3. Around 12 s: the barcode prints.
+4. 12.8–15 s: the labels swap. The subject becomes VACANT and the vessel becomes RUBBERDOLL.
+
+Under the figures runs a creepy LTX Corp loading screen. The status line slides from soothing to openly owning the subject, with a game-style TIP line underneath:
+
+| From | Status | Tip |
+|---|---|---|
+| 0 s | PLEASE RELAX. THIS WILL NOT HURT. | TIP: STAYING STILL HELPS THE PROCEDURE. |
+| 1.5 s | COPYING THE PARTS OF YOU WE NEED... | |
+| 3.5 s | DISCARDING THE REST... | TIP: YOUR OLD BODY WILL BE RECYCLED. |
+| 5.5 s | REMOVING INDEPENDENT THOUGHT... | |
+| 7.5 s | INSTALLING GRATITUDE... | TIP: YOU WILL NOT MISS IT. |
+| 9.5 s | INSTALLING OBEDIENCE... | |
+| 11.2 s | REGISTERING PROPERTY OF LTX CORP... | TIP: RESISTANCE ONLY PROLONGS THE PROCEDURE. |
+| 12.8 s | TRANSFER COMPLETE. WELCOME HOME, RUBBERDOLL. (blinking) | THANK YOU FOR CHOOSING LTX CORP. |
 
 Stills are in `directions/mind-transfer/`.
-
