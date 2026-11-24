@@ -150,7 +150,7 @@ Both medicine overlays also come as a CRT-TV render (`src/crt.js`, switched on b
 
 The clean versions without the CRT pass are kept alongside.
 
-## Resistance alert pop-up (in progress)
+## Resistance alert pop-up
 
 A keyable "RESISTANCE DETECTED — EMPLOYING CORRECTIONAL MIND TRANSFER" interrupt, built from the medicine overlays' parts (palette, label frame, LTX brand) with the CRT pass, plus one alarm-red accent (`#e8322a`). Every pixel is opaque, and no colour is green-ish.
 
@@ -165,4 +165,22 @@ Five candidate styles are in `src/alert_styles.js` (film `alerts`, scenes `al_1`
 | 5 · Terminal error | A black console printing the diagnosis (CONSCIENCE INTEGRITY: FAIL, COMPLIANCE INDEX: 12%), a red RESISTANCE DETECTED bar, a transfer bar and a cursor. |
 
 `src/med_common.js`: `makeFrame(...).panel(col)` now takes a fill colour, defaulting to white. The existing labels render unchanged.
+
+### Sequence for subject RUBBERDOLL: two variants per section
+
+Styles 5 (terminal) then 4 (mind-transfer diagram) are combined into a two-section sequence, built separately so the sections can be mixed in the edit. The source is `src/alert_seq.js` (film `alertseq`) with the CRT pass, on `#00FF00` at 1080p, 30 fps. Clips are in `output/resistance-alert/`:
+
+| Clip | Section | What happens |
+|---|---|---|
+| `1A_terminal_type-and-blink_5s.mp4` | 1 · terminal | The CRT powers on and the diagnosis types out (SUBJECT: RUBBERDOLL, CONSCIENCE INTEGRITY FAIL, COMPLIANCE INDEX 12%). The red RESISTANCE DETECTED bar blinks four times, then the transfer starts and "DO NOT RESIST. LTX CARES." types in. |
+| `1B_terminal_alarm-strobe_5s.mp4` | 1 · terminal | A hard cut to the full terminal. The red bar slams in with a screen shake while the box alternates with a red alarm version, followed by a signal tear and a slow pulse as the transfer starts. |
+| `2A_transfer_data-stream_10s.mp4` | 2 · transfer | Data blocks stream head to head. The subject drains to grey from the top down while the vessel's chest barcode lights bar by bar and a gloss sweeps down the suit. Ends on a blinking TRANSFER COMPLETE. |
+| `2B_transfer_scan-and-dissolve_10s.mp4` | 2 · transfer | A scan line sweeps the subject, who dissolves into pixels that fill the empty vessel from the bottom up. The status reads COPYING MEMORIES… OVERWRITING IDENTITY… INSTALLING OBEDIENCE…, then the barcode prints. The labels swap at the end: the subject becomes VACANT and the vessel becomes RUBBERDOLL. |
+
+The figures are two androgynous front-on busts:
+
+- **Subject:** cropped hair, a neutral face, and an orange prison top with a 0412 patch.
+- **Vessel:** a featureless figure in a shiny black full-body suit, with specular highlights, a cool rim light, and an orange barcode on the chest.
+
+All flashing stays at or under 2.5 flashes per second, measured on the rendered frames, which is inside the 3-per-second photosensitivity guideline.
 
