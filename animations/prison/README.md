@@ -239,3 +239,22 @@ Under the figures runs a creepy LTX Corp loading screen. The status line slides 
 | 12.8 s | TRANSFER COMPLETE. WELCOME HOME, RUBBERDOLL. (blinking) | THANK YOU FOR CHOOSING LTX CORP. |
 
 Stills are in `directions/mind-transfer/`.
+
+## RUBBERDOLL close-up: concept stills (choosing)
+
+A chest-up, dark breathing loop of the new RUBBERDOLL (the LTX vessel after the transfer). Five presentations were drawn as stills to choose from. They come from `src/closeup.js` (film `closeup`, scenes `cu_1`–`cu_5`), and the stills are in `directions/closeup/` (`all-five-concepts.png` shows all five).
+
+The figure is shared by every concept:
+
+- **Build:** each body part (head, neck and torso, two arms) is a hand-drawn outline inflated into a rounded form with a distance transform. Subtle relief is sculpted in, with a face pressed up under the latex (brow, eye hollows, nose, cheekbones, chin), collarbones, and the chest's curve. The height field is softened before lighting.
+- **Lighting:** a sharp key from the upper left gives crisp latex highlights. Cyan (right) and warm orange (left) rim lights follow only the outer silhouette.
+- **Details:** a respirator valve on the lower face, a ribbed tube over the right shoulder carrying the orange gas pulse, and the orange barcode with RUBBERDOLL on the upper chest.
+- **Animation hooks:** `breath` lifts the shoulders and swells the chest; `gas` moves the pulse along the tube.
+
+| Concept | Look | Keyable |
+|---|---|---|
+| 1 · CCTV amber feed | Amber monochrome security camera against a cinder-block wall: CAM 07 / BLOCK D / VESSEL WING, REC dot, timestamp, corner brackets, CRT | no |
+| 2 · Bio-monitor | Figure beside live vitals: respiration 6/MIN waveform, D0LL G4S saturation 87%, ECG 48, a flat SUPPRESSED neural line, STATUS: COMPLIANT | no |
+| 3 · Containment window | Behind a riveted viewing window (VESSEL 0412) with orange gas rising from below, glass streaks, a hazard sill, "RUBBERDOLL - CONTENTS COMPLIANT" | no |
+| 4 · CRT monitor prop | A pixel-art security monitor on `#00FF00` showing the amber feed. The CRT pass is limited to the screen; green checked clean | yes |
+| 5 · Thermal camera | Heat palette: warm face and neck, cooler arms and edges, cold tube with a hot gas pulse, breath plume at the valve, crosshair, 40C–18C scale, CORE / RESP / STATUS DORMANT | no |

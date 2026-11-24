@@ -13,17 +13,19 @@
 window.CRT = (() => {
   const W = 1920, H = 1080, ROW = [1.0, 0.9, 0.6];
   const hash = n => { let h = Math.imul(n | 0, 2654435761); h ^= h >>> 15; h = Math.imul(h, 2246822519); h ^= h >>> 13; return (h >>> 0) / 4294967296; };
-  function apply(c, lt, cycle = 5) {
+  // region (optional): [x0, y0, x1, y1] in screen pixels; only that rectangle is treated (default: the whole frame)
+  function apply(c, lt, cycle = 5, region) {
     const im = c.getImageData(0, 0, W, H), d = im.data, s = new Uint8ClampedArray(d);
     const key = j => s[j] === 0 && s[j + 1] === 255 && s[j + 2] === 0;
     const per = Math.round(cycle * 30), fr = ((Math.round(lt * 30) % per) + per) % per;
     const flick = 1 + 0.025 * (hash(fr + 7) - 0.5) * 2;
     const barY = (fr / per) * (H + 300) - 150;
     const jit = fr === Math.round(per * 0.44) || fr === Math.round(per * 0.44) + 1, jy0 = 380 + Math.round(hash(fr) * 40), jy1 = jy0 + 42;
-    for (let y = 0; y < H; y++) {
+    const [rx0, ry0, rx1, ry1] = region || [0, 0, W, H];
+    for (let y = ry0; y < ry1; y++) {
       const rf = ROW[y % 3] * flick * (1 + 0.07 * Math.exp(-(((y - barY) / 60) ** 2)));
       const shift = jit && y >= jy0 && y < jy1 ? (y & 4 ? 6 : -4) : 0;
-      for (let x = 0; x < W; x++) {
+      for (let x = rx0; x < rx1; x++) {
         const i = (y * W + x) * 4, sx = x - shift;
         if (sx < 0 || sx >= W) { if (shift) { d[i] = 0; d[i + 1] = 255; d[i + 2] = 0; } continue; }
         const j = (y * W + sx) * 4;
