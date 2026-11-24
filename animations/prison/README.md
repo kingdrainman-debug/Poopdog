@@ -208,3 +208,22 @@ All flashing stays at or under 2.5 flashes per second, measured on the rendered 
 
 The transfer itself isn't shown here; it comes later as its own menu. Flashing measures at most 2 per second on the rendered frames, and the green is untouched.
 
+## Mind-transfer menu
+
+`output/mind-transfer/mind-transfer_scan-and-dissolve_10s.mp4` is made from `src/mind_transfer.js` (film `mindtransfer`), on `#00FF00` with the CRT pass. It's the scan-and-dissolve version with these changes:
+
+- **Card:** a taller label (406×224, 100 stripes round, with the same corner radius as every other label), headed **MIND TRANSFER**.
+- **Framing:** both figures run head to hips with arms at their sides.
+- **Subject RUBBERDOLL:** a featureless, profile-picture-style blank head (no eyes, mouth or hair) on an orange jumpsuit with a zip and a 0412 patch.
+- **LTX vessel:** a clearly female figure, drawn as a clean, mannequin-like diagram, in a shiny black full-body suit. Each horizontal span of the silhouette is shaded on its own, giving glossy highlight bands and a cool rim light. It has an orange barcode on the upper chest and an orange padlock at hip level.
+
+The sequence:
+
+1. A scan line sweeps the subject.
+2. The subject dissolves top-down into pixels that arc across and fill the vessel from the hips up, so the padlock appears early.
+3. The status reads COPYING MEMORIES… OVERWRITING IDENTITY… INSTALLING OBEDIENCE…
+4. The barcode prints.
+5. The labels swap: the subject becomes VACANT and the vessel becomes RUBBERDOLL.
+
+Stills are in `directions/mind-transfer/`.
+
