@@ -282,3 +282,22 @@ Continuous through the loop:
 Every motion completes a whole number of cycles in 20 s, and the CRT pass repeats every 5 s, so frame 600 is byte-identical to frame 0. There are no flashes: mean frame luminance stays between 0.081 and 0.087.
 
 Key frames are in `directions/closeup/loop-containment-window_*.png`.
+
+### Concept 3, one minute: consent, face removal, inserted thoughts
+
+`output/closeup/rubberdoll-closeup_containment-window_face-removal_60s.mp4` comes from scene `cu3_seq` (film `closeupwindow60`). It runs 60 s at 30 fps (1,800 frames) with the CRT pass.
+
+The 20 s loop keeps running underneath, giving six breaths: inhale with the gas pulse and valve glow, hold, exhale vapour, drifting haze, rising motes and condensation drops. On top of that, three LTX interventions play out as a story. Because of that it is a one-way sequence, not a seamless loop: it starts with a face and ends without one.
+
+| Time | Event |
+|---|---|
+| 2.5–11.5 s | **Consent dialog** (LTX CORP // CONSENT) opens over the chest: "PROCEDURE: FACIAL RELIEF REMOVAL. DO YOU CONSENT?" with two buttons, both YES. A cursor drifts in and clicks the first at 8 s. The box shows "CONSENT RECORDED. THANK YOU, RUBBERDOLL." and collapses. |
+| 15, 25, 35, 45 s | **Face removal**: on each exhale an orange beam sweeps down the head over 4 s. Above the beam, the face under the latex (brow, eye hollows, nose, cheekbones, chin) loses another quarter of its relief. By 49 s the head is a smooth, featureless shape. |
+| 16, 26, 36 s | **Inserted thoughts**: an orange cursor types "I AM COMFORTABLE.", "I AM GRATEFUL." and "I DO NOT NEED A FACE." onto the glass. Each holds, then is deleted. |
+| 51 s | "I AM RUBBERDOLL." is typed and stays to the end. |
+
+A panel on the wall tracks FACIAL RELIEF. It reads 100% PENDING, then APPROVED after the click, then counts down IN PROGRESS with one bar segment per pass, and ends at 0% REDUNDANT in red.
+
+There is no flashing: frame luminance stays within 0.079–0.094, with no swings above 2%. The cursor blinks at 2 per second.
+
+Key frames are in `directions/closeup/face-removal_*.png`.

@@ -83,14 +83,16 @@
     + 5 * gs(Math.abs(u) - 23, v - 70, 10, 8) + 3 * gs(u, v - 114, 10, 5);
   const reliefBody = (u, v, lift, breath) => 2.5 * gs(Math.abs(u) - 30, v - (180 - lift + Math.abs(u) * 0.1), 18, 3.5)
     + (8 + 1.5 * breath) * bust((Math.abs(u) - 35) / 31, (v - 256 + lift * 0.5));
-  function vessel({ cx, y0, s, breath = 0.5, gas = 0.4, plume = 0, glow = 0 }) {
+  // face: how much of the face shows under the latex (1 = full relief, 0 = smooth), or a function of v (a wipe)
+  function vessel({ cx, y0, s, breath = 0.5, gas = 0.4, plume = 0, glow = 0, face = 1 }) {
+    const faceK = typeof face === 'function' ? face : () => face;
     const col = new Array(N).fill(null), L = new Float32Array(N), heat = new Float32Array(N);
     const lift = breath * 4, br = Math.max(1, Math.round(2 * s));
     const parts = [
       { m: partMask(cx, y0, s, BODY(lift)), R: 30 * s, h: 0.6, rel: (u, v) => reliefBody(u, v, lift, breath), hot: (u, v) => 0.1 * gs(u, v - 170, 34, 46) },
       { m: partMask(cx, y0, s, ARM(-1, lift)), R: 12 * s, h: 0.48 },
       { m: partMask(cx, y0, s, ARM(1, lift)), R: 12 * s, h: 0.48 },
-      { m: partMask(cx, y0, s, HEAD), R: 34 * s, h: 0.74, rel: reliefHead, hot: (u, v) => 0.1 * gs(u, v - 82, 26, 30) },
+      { m: partMask(cx, y0, s, HEAD), R: 34 * s, h: 0.74, rel: (u, v) => faceK(v) * reliefHead(u, v), hot: (u, v) => 0.1 * gs(u, v - 82, 26, 30) },
     ];
     const all = new Uint8Array(N), own = new Int8Array(N).fill(-1);
     parts.forEach((P, k) => { for (let i = 0; i < N; i++) if (P.m[i]) { all[i] = 1; own[i] = k; } });
@@ -249,13 +251,85 @@
   const VAPOUR = Array.from({ length: 34 }, (_, k) => ({ b: 5.1 + 3.6 * k / 34 + 0.12 * hsh(k, 1, 5), vx: (hsh(k, 2, 5) - 0.5) * 26, vy: 6 + 6 * hsh(k, 3, 5), ph: TAU * hsh(k, 4, 5), r: 2.4 + 1.4 * hsh(k, 5, 5) }));
   const MOTES = Array.from({ length: 48 }, (_, k) => ({ x: WX0 + 10 + (WX1 - WX0 - 20) * hsh(k, 1, 9), n: hsh(k, 2, 9) > 0.6 ? 2 : 1, off: hsh(k, 3, 9), ph: TAU * hsh(k, 4, 9), a: 2 + 4 * hsh(k, 5, 9) }));
   const DROPS = [{ x: 186, y: 70 }, { x: 456, y: 58 }];
-  function tank(c, lt, anim) {
-    const t = ((lt % LOOP) + LOOP) % LOOP, p = t % BREATH;
+  // ── the 60 s story layer (scene cu3_seq): consent, face removal, inserted thoughts ──
+  //   2.5–11.5 s  LTX consent dialog: FACIAL RELIEF REMOVAL, DO YOU CONSENT? [YES] [YES]; a cursor clicks YES
+  //   15/25/35/45 s  on each exhale an orange beam sweeps down the head and the face flattens by a quarter
+  //   16/26/36/51 s  first-person thoughts are typed onto the glass by an orange cursor; the last one stays
+  // A wall panel tracks FACIAL RELIEF 100% → 0% → REDUNDANT. Ambient motion (breath, haze, motes, drops, vapour)
+  // keeps its 20 s cycle underneath.
+  const F8 = `8px ${PX}`;
+  const STEPS = [15, 25, 35, 45], SCAN = 4;
+  function faceAt(T) {
+    let k = 0;
+    for (const s0 of STEPS) {
+      if (T >= s0 + SCAN) { k++; continue; }
+      if (T >= s0) { const prog = ease((T - s0) / SCAN), old = 1 - 0.25 * k; return { k, old, nw: old - 0.25, scan: -6 + 136 * prog, pct: Math.round(100 * (old - 0.25 * prog)) }; }
+      break;
+    }
+    const old = 1 - 0.25 * k; return { k, old, nw: old, scan: null, pct: Math.round(100 * old) };
+  }
+  const THOUGHTS = [[16, 'I AM COMFORTABLE.'], [26, 'I AM GRATEFUL.'], [36, 'I DO NOT NEED A FACE.'], [51, 'I AM RUBBERDOLL.', true]];
+  const pointer = (px, py) => UI.paint(UI.mask(g => { g.beginPath(); g.moveTo(px, py); g.lineTo(px, py + 11); g.lineTo(px + 3, py + 8); g.lineTo(px + 5, py + 12);
+    g.lineTo(px + 7, py + 11); g.lineTo(px + 5, py + 7); g.lineTo(px + 9, py + 7); g.closePath(); g.fill(); }), C.white, C.black, 1);
+  function story(T, fs) {
+    // wall panel: FACIAL RELIEF readout
+    const PX0 = 512, PY0 = 96, PW = 120, PH = 78;
+    rr(PX0, PY0, PW, PH, 2, C.black, C.orange);
+    txt('FACIAL RELIEF', F8, PX0 + 8, PY0 + 7, C.orange);
+    const done = T >= STEPS[3] + SCAN;
+    txt(`${fs.pct}%`, `18px ${AB}`, PX0 + PW / 2, PY0 + 20, done ? RED : C.white, 'center');
+    const status = T < 8 ? 'PENDING' : T < STEPS[0] ? 'APPROVED' : done ? 'REDUNDANT' : 'IN PROGRESS';
+    txt(status, F8, PX0 + PW / 2, PY0 + 48, done ? RED : status === 'APPROVED' ? C.cyan : C.orangeL, 'center');
+    for (let k = 0; k < 4; k++) {                                        // one segment per smoothing pass
+      const fill = k < fs.k ? 1 : k === fs.k && fs.scan !== null ? (fs.scan + 6) / 136 : 0, x = PX0 + 8 + k * 27;
+      rect(x, PY0 + 62, 24, 7, INK, C.orangeD); if (fill > 0) rect(x + 1, PY0 + 63, Math.max(1, Math.round(22 * fill)), 5, done ? RED : C.orange);
+    }
+    // consent dialog
+    const DX = 196, DY = 158, DW = 248, DH = 92, open = clamp((T - 2.5) / 0.25), close = clamp((T - 11.2) / 0.25);
+    if (open > 0 && close < 1) {
+      const h = Math.round(DH * open * (1 - close)), y = DY + Math.round((DH - h) / 2);
+      if (h < 4) rect(DX + 20, DY + DH / 2 - 1, DW - 40, 2, C.orangeL);
+      else rr(DX, y, DW, h, 2, C.black, C.orange);
+      if (h >= DH) {
+        rect(DX + 1, DY + 1, DW - 2, 13, C.orange); txt('LTX CORP // CONSENT', F8, DX + 7, DY + 4, C.black);
+        if (T < 8.5) {
+          txt('PROCEDURE:', F8, DX + 12, DY + 22, C.grey); txt('FACIAL RELIEF REMOVAL', F8, DX + 12, DY + 34, C.white);
+          txt('DO YOU CONSENT?', F8, DX + 12, DY + 50, C.orange);
+          const pressed = T >= 8.0;
+          [[DX + 36, pressed], [DX + 140, false]].forEach(([bx, on]) => {
+            rr(bx, DY + 66, 72, 16, 2, on ? C.orange : C.black, on ? C.orangeL : C.orange);
+            txt('YES', F8, bx + 36, DY + 70, on ? C.black : C.orange, 'center');
+          });
+        } else {
+          txt('CONSENT RECORDED.', F8, DX + DW / 2, DY + 36, C.white, 'center');
+          txt('THANK YOU, RUBBERDOLL.', F8, DX + DW / 2, DY + 56, C.orange, 'center');
+        }
+      }
+      if (T >= 5 && T < 9.6) {                                           // the cursor that answers for them
+        const q = ease((T - 5) / 2.5), tx = DX + 66, ty = DY + 74 + (T >= 8.0 && T < 8.3 ? 1 : 0);
+        pointer(Math.round(430 + (tx - 430) * q), Math.round(300 + (ty - 300) * q));
+      }
+    }
+    // inserted thoughts, typed onto the glass by LTX's cursor
+    for (const [t0, str, keep] of THOUGHTS) {
+      const tt = T - t0; if (tt < 0) continue;
+      const tType = str.length / 12, hold = 3.2;
+      let n = Math.min(str.length, Math.floor(tt * 12)), typing = n < str.length;
+      if (!keep && tt > tType + hold) { n = str.length - Math.floor((tt - tType - hold) * 30); typing = true; if (n < 0) continue; }
+      const x0 = 320 - str.length * 4, y = 284;
+      if (n > 0) UI.paint(UI.text(str.slice(0, n), F8, x0, y, 'left'), C.white, C.black, 1);
+      if (typing || Math.floor(T * 4) % 2 === 0) rect(x0 + n * 8 + 1, y, 7, 8, C.orange);
+    }
+  }
+
+  function tank(c, lt, anim, seq) {
+    const t = ((lt % LOOP) + LOOP) % LOOP, p = t % BREATH, fs = seq ? faceAt(lt) : null;
     const breath = anim ? breathAt(p) : 0.6;
     const gas = anim ? (p < 4 ? -0.12 + 1.2 * (p / 4) : -1) : 0.45;
     const glow = anim ? clamp(1 - Math.abs(p - 4.3) / 1.1) ** 1.5 : 0;
     const cx = 320, s = 0.94, y0 = 40 - (anim ? breath * 1.2 : 0);
-    const v = vessel({ cx, y0, s, breath, gas, glow });
+    const face = !fs ? 1 : fs.scan === null ? fs.old : (vv => (vv < fs.scan ? fs.nw : fs.old));
+    const v = vessel({ cx, y0, s, breath, gas, glow, face });
     const WV = new Float32Array(W);                                      // the drifting top of the gas
     if (anim) for (let x = 0; x < W; x++) WV[x] = 10 * Math.sin(x * 0.035 + TAU * t / 10) + 6 * Math.sin(x * 0.08 - TAU * t / 5) + 4 * Math.sin(x * 0.013 + TAU * t / 20);
     HD.fill((x, y) => {                                                  // dark wall, then the chamber
@@ -268,6 +342,12 @@
       const haze = clamp((y - 230 + WV[x]) / 120) * 0.45;
       return bayer(x, y) < haze ? (vv.L[i] > 0.5 ? C.orangeL : vv.L[i] > 0.15 ? C.orange : PRISON.R[3]) : vv.col[i];
     });
+    if (fs && fs.scan !== null) {                                       // the smoothing beam sweeping down the head
+      const yl = Math.round(y0 + fs.scan * s);
+      for (let x = Math.floor(cx - 46 * s); x <= cx + 46 * s; x++) for (const [dy, col, th] of [[0, C.orangeL, 1], [-1, C.orange, 1], [-2, C.orangeD, 0.5], [-3, C.orangeD, 0.25]]) {
+        const y = yl + dy; if (y < 0 || y >= H || !v.col[y * W + x]) continue; if (bayer(x, y) < th) put(x, y, col);
+      }
+    }
     if (anim) {
       for (const m of MOTES) {                                           // motes rising through the gas
         const k = ((t / LOOP) * m.n + m.off) % 1, yy = Math.round(WY1 - 4 - k * 170), xx = Math.round(m.x + m.a * Math.sin(TAU * t / 10 + m.ph));
@@ -310,10 +390,12 @@
     rr(250, 4, 140, 14, 2, C.orange, C.black); txt('VESSEL 0412', `8px ${PX}`, 320, 7, C.black, 'center');
     UI.paint(UI.mask(g => g.fillRect(WX0 + 10, WY1 + 18, WX1 - WX0 - 20, 8)), (x, y) => ((((x + y) >> 3) & 1) ? C.orange : C.black), C.black, 1);
     txt('RUBBERDOLL - CONTENTS COMPLIANT', `8px ${PX}`, 320, 344, C.orange, 'center');
+    if (seq) story(lt, fs);
     HD.present(c); CRT.apply(c, lt, 5);
   }
   SCENES['cu_3'] = { draw(c, lt) { tank(c, lt, false); } };
   SCENES['cu3_loop'] = { draw(c, lt) { tank(c, lt, true); } };
+  SCENES['cu3_seq'] = { draw(c, lt) { tank(c, lt, true, true); } };
 
   // 4 · monitor prop on chroma green: a CRT security monitor showing the amber feed (keyable)
   SCENES['cu_4'] = { draw(c, lt) {
