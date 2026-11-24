@@ -260,3 +260,25 @@ The figure is shared by every concept:
 | 3 · Containment window | Behind a riveted viewing window (VESSEL 0412) with orange gas rising from below, glass streaks, a hazard sill, "RUBBERDOLL - CONTENTS COMPLIANT" | no |
 | 4 · CRT monitor prop | A pixel-art security monitor on `#00FF00` showing the amber feed. The CRT pass is limited to the screen; green checked clean | yes |
 | 5 · Thermal camera | Heat palette: warm face and neck, cooler arms and edges, surfaces facing the camera warmer (so the form reads), cold tube with a hot gas pulse, breath plume at the valve, crosshair, 40C–18C scale, CORE / RESP / STATUS DORMANT | no |
+
+### Concept 3 animated: containment window breathing loop
+
+`output/closeup/rubberdoll-closeup_containment-window_breathing_20s.mp4` comes from scene `cu3_loop` (film `closeupwindow`). It's a 20 s seamless loop at 30 fps (600 frames), 1920×1080, with the CRT pass. Not keyable: it's a full-frame shot.
+
+RUBBERDOLL breathes at 6 per minute, so there are two breaths per loop. Each 10 s breath runs:
+
+| Time in breath | What happens |
+|---|---|
+| 0–4 s (inhale) | Shoulders rise, the chest swells and the head lifts about a pixel. A pulse of orange gas climbs the hose from below the frame to the valve. |
+| about 3.2–5.4 s | The valve grille glows orange as the gas arrives, then fades. |
+| 4–5 s (hold) | Still. |
+| 5–10 s (exhale) | The body settles. Pale vapour puffs out of the valve, spreads and rises, fading over about 3 s. |
+
+Continuous through the loop:
+- **Gas haze:** the top edge of the orange gas drifts on slow waves.
+- **Motes:** they rise through the gas.
+- **Condensation:** a drop runs down the glass once per breath, on alternating sides, leaves a trail and fades.
+
+Every motion completes a whole number of cycles in 20 s, and the CRT pass repeats every 5 s, so frame 600 is byte-identical to frame 0. There are no flashes: mean frame luminance stays between 0.081 and 0.087.
+
+Key frames are in `directions/closeup/loop-containment-window_*.png`.

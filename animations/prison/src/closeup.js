@@ -83,9 +83,9 @@
     + 5 * gs(Math.abs(u) - 23, v - 70, 10, 8) + 3 * gs(u, v - 114, 10, 5);
   const reliefBody = (u, v, lift, breath) => 2.5 * gs(Math.abs(u) - 30, v - (180 - lift + Math.abs(u) * 0.1), 18, 3.5)
     + (8 + 1.5 * breath) * bust((Math.abs(u) - 35) / 31, (v - 256 + lift * 0.5));
-  function vessel({ cx, y0, s, breath = 0.5, gas = 0.4, plume = 0 }) {
+  function vessel({ cx, y0, s, breath = 0.5, gas = 0.4, plume = 0, glow = 0 }) {
     const col = new Array(N).fill(null), L = new Float32Array(N), heat = new Float32Array(N);
-    const lift = breath * 3, br = Math.max(1, Math.round(2 * s));
+    const lift = breath * 4, br = Math.max(1, Math.round(2 * s));
     const parts = [
       { m: partMask(cx, y0, s, BODY(lift)), R: 30 * s, h: 0.6, rel: (u, v) => reliefBody(u, v, lift, breath), hot: (u, v) => 0.1 * gs(u, v - 170, 34, 46) },
       { m: partMask(cx, y0, s, ARM(-1, lift)), R: 12 * s, h: 0.48 },
@@ -160,7 +160,9 @@
       const u = (x + 0.5 - cx) / s, v = (y + 0.5 - y0) / s, dv = Math.hypot(u, v - 100), i = y * W + x; if (dv >= 13) continue;
       let c;
       if (dv >= 8.5) { const a = Math.atan2(v - 100, u), sh = -Math.cos(a + 2.3); c = sh > 0.4 ? C.whiteS : sh > -0.2 ? C.grey : GREYD; if (dv > 12) c = C.black; }
-      else { c = INK; for (const k of [-4, 0, 4]) if (Math.abs(v - 100 - k) < 1.2 && Math.abs(u) < 6) c = C.black; }
+      else {                                                           // grille; glows orange as the gas arrives (glow 0..1)
+        const g = glow * (1 - 0.5 * dv / 8.5), b = bayer(x, y); c = b < g * 0.55 ? C.orangeL : b < g ? C.orange : INK;
+        for (const k of [-4, 0, 4]) if (Math.abs(v - 100 - k) < 1.2 && Math.abs(u) < 6) c = C.black; }
       col[i] = c; L[i] = lum(c); heat[i] = 0.86;
     }
     for (const i of cuffPx) {                                            // the metal cuff joining hose and valve
@@ -233,35 +235,85 @@
   } };
 
   // 3 · containment tank: behind a riveted viewing window, orange gas haze, reflections and condensation
-  SCENES['cu_3'] = { draw(c, lt) {
-    const v = vessel({ cx: 320, y0: 40, s: 0.94, breath: 0.6, gas: 0.45 });
-    const WX0 = 150, WY0 = 22, WX1 = 490, WY1 = 310, RAD = 26;
-    const inWin = (x, y) => { const cx = Math.min(Math.max(x, WX0 + RAD), WX1 - RAD), cy = Math.min(Math.max(y, WY0 + RAD), WY1 - RAD); return Math.hypot(x - cx, y - cy) <= RAD; };
+  // tank(c, lt, anim): anim = false draws the approved still; anim = true is the 20 s seamless breathing loop.
+  // Loop timing: one breath every 10 s (6 per minute), two per loop. Inhale 0–4 s (an orange gas pulse climbs the hose
+  // and the valve grille glows as it arrives), hold 4–5 s, exhale 5–10 s (pale vapour leaves the valve and rises).
+  // Breathing lifts the shoulders, swells the chest and raises the head a pixel. The haze line drifts on sine waves
+  // with whole cycles per 20 s, motes rise through the gas wrapping exactly once or twice per loop, and a condensation
+  // drop runs down the glass once per breath (alternating sides). Everything repeats exactly at 20 s.
+  const TAU = Math.PI * 2, LOOP = 20, BREATH = 10;
+  const ease = x => 0.5 - 0.5 * Math.cos(Math.PI * clamp(x));
+  const breathAt = p => (p < 4 ? ease(p / 4) : p < 5 ? 1 : 1 - ease((p - 5) / 5));
+  const WX0 = 150, WY0 = 22, WX1 = 490, WY1 = 310, RAD = 26;
+  const inWin = (x, y) => { const qx = Math.min(Math.max(x, WX0 + RAD), WX1 - RAD), qy = Math.min(Math.max(y, WY0 + RAD), WY1 - RAD); return Math.hypot(x - qx, y - qy) <= RAD; };
+  const VAPOUR = Array.from({ length: 34 }, (_, k) => ({ b: 5.1 + 3.6 * k / 34 + 0.12 * hsh(k, 1, 5), vx: (hsh(k, 2, 5) - 0.5) * 26, vy: 6 + 6 * hsh(k, 3, 5), ph: TAU * hsh(k, 4, 5), r: 2.4 + 1.4 * hsh(k, 5, 5) }));
+  const MOTES = Array.from({ length: 48 }, (_, k) => ({ x: WX0 + 10 + (WX1 - WX0 - 20) * hsh(k, 1, 9), n: hsh(k, 2, 9) > 0.6 ? 2 : 1, off: hsh(k, 3, 9), ph: TAU * hsh(k, 4, 9), a: 2 + 4 * hsh(k, 5, 9) }));
+  const DROPS = [{ x: 186, y: 70 }, { x: 456, y: 58 }];
+  function tank(c, lt, anim) {
+    const t = ((lt % LOOP) + LOOP) % LOOP, p = t % BREATH;
+    const breath = anim ? breathAt(p) : 0.6;
+    const gas = anim ? (p < 4 ? -0.12 + 1.2 * (p / 4) : -1) : 0.45;
+    const glow = anim ? clamp(1 - Math.abs(p - 4.3) / 1.1) ** 1.5 : 0;
+    const cx = 320, s = 0.94, y0 = 40 - (anim ? breath * 1.2 : 0);
+    const v = vessel({ cx, y0, s, breath, gas, glow });
+    const WV = new Float32Array(W);                                      // the drifting top of the gas
+    if (anim) for (let x = 0; x < W; x++) WV[x] = 10 * Math.sin(x * 0.035 + TAU * t / 10) + 6 * Math.sin(x * 0.08 - TAU * t / 5) + 4 * Math.sin(x * 0.013 + TAU * t / 20);
     HD.fill((x, y) => {                                                  // dark wall, then the chamber
       if (!inWin(x + 0.5, y + 0.5)) return pick([C.black, hex('#1a0b03'), RUST], 0.35 + 0.3 * HD.hash(x >> 3, y >> 3, 4), x, y);
-      const haze = clamp((y - 150) / 190);
+      const haze = clamp((y - 150 + WV[x]) / 190);
       return pick(PRISON.R, 0.08 + 0.45 * haze * haze, x, y);
     });
     blit(v, (vv, i, x, y) => {                                          // the figure seen through orange gas (window only)
       if (!inWin(x + 0.5, y + 0.5)) return null;
-      const haze = clamp((y - 230) / 120) * 0.45;
+      const haze = clamp((y - 230 + WV[x]) / 120) * 0.45;
       return bayer(x, y) < haze ? (vv.L[i] > 0.5 ? C.orangeL : vv.L[i] > 0.15 ? C.orange : PRISON.R[3]) : vv.col[i];
     });
+    if (anim) {
+      for (const m of MOTES) {                                           // motes rising through the gas
+        const k = ((t / LOOP) * m.n + m.off) % 1, yy = Math.round(WY1 - 4 - k * 170), xx = Math.round(m.x + m.a * Math.sin(TAU * t / 10 + m.ph));
+        const a = clamp((yy - (WY1 - 174)) / 80) * clamp((WY1 - 4 - yy) / 16);
+        if (a > 0.2 && inWin(xx + 0.5, yy + 0.5)) put(xx, yy, a > 0.65 ? C.orangeL : C.orange);
+      }
+      const vx0 = cx + 2 * s, vy0 = y0 + 102 * s;
+      for (const q of VAPOUR) {                                          // exhaled vapour from the valve
+        const age = (((p - q.b) % BREATH) + BREATH) % BREATH, LIFE = 3.2; if (age >= LIFE) continue;
+        const px = vx0 + q.vx * age + 2 * Math.sin(age * 2.2 + q.ph), py = vy0 + 2 - q.vy * age - 1.5 * age * age, r = q.r + 3.2 * age;
+        const a0 = 0.95 * (1 - age / LIFE) ** 1.3 * clamp(age / 0.25);
+        for (let y = Math.floor(py - r); y <= py + r; y++) for (let x = Math.floor(px - r); x <= px + r; x++) {
+          const d = Math.hypot(x + 0.5 - px, y + 0.5 - py); if (d > r || !inWin(x + 0.5, y + 0.5)) continue;
+          const al = a0 * (1 - d / r), b = bayer(x, y);
+          if (b < al) put(x, y, b < al * 0.35 ? C.whiteS : b < al * 0.7 ? C.grey : GREYD);
+        }
+      }
+    }
     for (let y = WY0; y < WY1; y++) for (let x = WX0; x < WX1; x++) {   // glass reflections and condensation
       if (!inWin(x + 0.5, y + 0.5)) continue;
       const d1 = (x + y * 0.8) - 300, d2 = (x + y * 0.8) - 330;
       if ((Math.abs(d1) < 6 && bayer(x, y) < 0.35) || (Math.abs(d2) < 2 && bayer(x, y) < 0.5)) put(x, y, C.whiteS);
       if (y > 250 && hsh(x, y, 7) > 0.994) put(x, y, C.grey);
     }
+    if (anim) {                                                          // a condensation drop runs down the glass once per breath
+      const D = DROPS[Math.floor(t / BREATH) % 2], y1 = WY1 - 14;
+      if (p >= 1) {
+        const yh = Math.round(D.y + (y1 - D.y) * clamp((p - 1) / 5.5) ** 1.6), fade = 1 - clamp((p - 6.5) / 3);
+        for (let y = D.y; y <= yh; y++) {
+          const x = D.x + (hsh(D.x, y >> 3, 11) > 0.7 ? 1 : 0), a = fade * (0.25 + 0.35 * (y - D.y) / Math.max(1, yh - D.y));
+          if (bayer(x, y) < a) put(x, y, C.grey);
+        }
+        if (fade > 0.6) { const x = D.x + (hsh(D.x, yh >> 3, 11) > 0.7 ? 1 : 0); put(x, yh, C.white); put(x + 1, yh, C.whiteS); put(x, yh + 1, C.whiteS); put(x + 1, yh + 1, C.grey); }
+      }
+    }
     // riveted steel frame and stencilled plate
     const ring = UI.mask(g => { g.beginPath(); g.roundRect(WX0 - 14, WY0 - 14, WX1 - WX0 + 28, WY1 - WY0 + 28, RAD + 14); g.roundRect(WX0, WY0, WX1 - WX0, WY1 - WY0, RAD); g.fill('evenodd'); });
-    UI.paint(ring, (x, y) => { const t = (y - WY0 + 14) / (WY1 - WY0 + 28); return bayer(x, y) < 0.5 - t * 0.4 ? C.grey : GREYD; }, C.black, 1);
+    UI.paint(ring, (x, y) => { const q = (y - WY0 + 14) / (WY1 - WY0 + 28); return bayer(x, y) < 0.5 - q * 0.4 ? C.grey : GREYD; }, C.black, 1);
     for (let k = 0; k < 10; k++) for (const [x, y] of [[WX0 - 7, WY0 + 30 + k * 30], [WX1 + 7, WY0 + 30 + k * 30]]) if (y < WY1 - 20) UI.paint(UI.mask(g => { g.beginPath(); g.arc(x, y, 2.2, 0, Math.PI * 2); g.fill(); }), C.whiteS, C.black, 1);
     rr(250, 4, 140, 14, 2, C.orange, C.black); txt('VESSEL 0412', `8px ${PX}`, 320, 7, C.black, 'center');
     UI.paint(UI.mask(g => g.fillRect(WX0 + 10, WY1 + 18, WX1 - WX0 - 20, 8)), (x, y) => ((((x + y) >> 3) & 1) ? C.orange : C.black), C.black, 1);
     txt('RUBBERDOLL - CONTENTS COMPLIANT', `8px ${PX}`, 320, 344, C.orange, 'center');
     HD.present(c); CRT.apply(c, lt, 5);
-  } };
+  }
+  SCENES['cu_3'] = { draw(c, lt) { tank(c, lt, false); } };
+  SCENES['cu3_loop'] = { draw(c, lt) { tank(c, lt, true); } };
 
   // 4 · monitor prop on chroma green: a CRT security monitor showing the amber feed (keyable)
   SCENES['cu_4'] = { draw(c, lt) {
